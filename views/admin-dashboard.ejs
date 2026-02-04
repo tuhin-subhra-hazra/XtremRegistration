@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <div class="form-container" style="max-width: 1000px;">
+        <a href="/admin/logout" class="logout-link">Logout</a>
+        <div class="header">
+            <h2>Registration Dashboard</h2>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Email</th>
+                        <th>Company</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% users.forEach(u=> { %>
+                        <tr>
+                            <td data-label="Name"><strong>
+                                    <%= u.name %>
+                                </strong></td>
+                            <td data-label="Mobile">
+                                <%= u.mobile %>
+                            </td>
+                            <td data-label="Email">
+                                <%= u.email %>
+                            </td>
+                            <td data-label="Company">
+                                <%= u.companyName %>
+                            </td>
+                            <td data-label="Action">
+                                <% if (u.isGifted) { %>
+                                    <button class="btn-status btn-gifted" disabled>Gifted</button>
+                                    <% } else { %>
+                                        <form method="POST" action="/admin/gift" style="width: 100%;">
+                                            <input type="hidden" name="docId" value="<%= u.id %>">
+                                            <button type="submit" class="btn-status">Mark Gifted</button>
+                                        </form>
+                                        <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+
+</html>
