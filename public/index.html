@@ -52,19 +52,15 @@
             document.getElementById("btnText").style.display = "none";
             document.getElementById("loader").classList.remove("hidden");
             btn.disabled = true;
-
-            return true; // allow form submit
+            return true;
         }
 
         window.addEventListener("pageshow", function (event) {
             if (event.persisted) {
-                // Page was restored from back/forward cache
                 window.location.reload();
             }
         });
     </script>
-
-
 </body>
 
 </html>

@@ -1,0 +1,14 @@
+const bcrypt = require("bcrypt");
+const admin = require("firebase-admin");
+
+(async () => {
+    const hash = await bcrypt.hash("admin@123", 10);
+
+    await db.collection("Admin").add({
+        username: "admin",
+        passwordHash: hash,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log("Admin created");
+})();
