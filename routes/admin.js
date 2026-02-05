@@ -29,7 +29,9 @@ Router.post("/login", async (req, res) => {
             .get();
 
         if (snapshot.empty) {
-            return res.send("Invalid credentials");
+            return res.render("admin-login", {
+                error: "Invalid username or password"
+            });
         }
 
         const adminDoc = snapshot.docs[0];
@@ -37,7 +39,9 @@ Router.post("/login", async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, admin.passwordHash);
         if (!isMatch) {
-            return res.send("Invalid credentials");
+            return res.render("admin-login", {
+                error: "Invalid username or password"
+            });
         }
 
         // ✅ Login success
@@ -48,9 +52,12 @@ Router.post("/login", async (req, res) => {
 
     } catch (err) {
         console.error("Admin login error:", err);
-        res.status(500).send("Login failed");
+        res.render("adminLogin", {
+            error: "Something went wrong. Please try again."
+        });
     }
 });
+
 
 function adminAuth(req, res, next) {
     if (req.session.adminId) {
@@ -72,7 +79,7 @@ Router.get("/dashboard", adminAuth, async (req, res) => {
 
 
 Router.post("/gift", adminAuth, async (req, res) => {
-    const { docId } = req.body;
+    const { docId, scrollTo } = req.body;
 
     try {
         await db.collection("XtremUser")
@@ -81,7 +88,7 @@ Router.post("/gift", adminAuth, async (req, res) => {
                 isGifted: true
             });
 
-        res.redirect("/admin/dashboard");
+        res.redirect(`/admin/dashboard#${scrollTo}`);
 
     } catch (err) {
         console.error("Gift update error:", err);

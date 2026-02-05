@@ -28,7 +28,7 @@
                 </thead>
                 <tbody>
                     <% users.forEach(u=> { %>
-                        <tr>
+                        <tr id="row-<%= u.id %>">
                             <td data-label="Name"><strong>
                                     <%= u.name %>
                                 </strong></td>
@@ -45,10 +45,17 @@
                                 <% if (u.isGifted) { %>
                                     <button class="btn-status btn-gifted" disabled>Gifted</button>
                                     <% } else { %>
-                                        <form method="POST" action="/admin/gift" style="width: 100%;">
+                                        <form method="POST" action="/admin/gift" style="width: 100%;"
+                                            onsubmit="return giftLoading(this)">
+
                                             <input type="hidden" name="docId" value="<%= u.id %>">
-                                            <button type="submit" class="btn-status">Mark Gifted</button>
+
+                                            <button type="submit" class="btn-status">
+                                                <span class="gift-text">Mark Gifted</span>
+                                                <span class="spinner hidden"></span>
+                                            </button>
                                         </form>
+
                                         <% } %>
                             </td>
                         </tr>
@@ -57,6 +64,30 @@
             </table>
         </div>
     </div>
+
+    <script>
+        function giftLoading(form) {
+            const btn = form.querySelector("button");
+            const text = btn.querySelector(".gift-text");
+            const spinner = btn.querySelector(".spinner");
+
+            text.style.display = "none";
+            spinner.classList.remove("hidden");
+            btn.disabled = true;
+
+            localStorage.setItem("scrollY", window.scrollY);
+            return true; // allow submit
+        }
+
+        window.onload = () => {
+            const y = localStorage.getItem("scrollY");
+            if (y) {
+                window.scrollTo(0, parseInt(y));
+                localStorage.removeItem("scrollY");
+            }
+        };
+    </script>
+
 
 </body>
 
