@@ -275,6 +275,7 @@ tbody button:disabled {
 
     tbody button {
         width: 100%;
+        height: 45px;
     }
 
 }
