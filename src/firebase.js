@@ -3,15 +3,15 @@ import { getDatabase } from "firebase/database";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCqBRXsurzF2zCUQrLeACfbmIIyWZidPXo",
-  authDomain: "xtremregistration.firebaseapp.com",
-  databaseURL: "https://xtremregistration-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "xtremregistration",
-  storageBucket: "xtremregistration.firebasestorage.app",
-  messagingSenderId: "136229481276",
-  appId: "1:136229481276:web:9130e043f62cc876b84c39",
-  measurementId: "G-4CJPPL47LK"
-}
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
 
 const app = initializeApp(firebaseConfig);
 

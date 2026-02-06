@@ -58,7 +58,7 @@ export default function AdminLogin() {
                             passwordInput.type = "password";
                         }
                     }} />
-                    <label for="togglePassword">Show password</label>
+                    <label htmlFor="togglePassword">Show password</label>
                 </div>
                 <button type="submit" id="loginBtn">
                     <span id="btnText">Login</span>

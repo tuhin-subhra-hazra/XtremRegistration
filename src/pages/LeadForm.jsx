@@ -27,7 +27,7 @@ export default function LeadForm() {
         setLoading(false);
 
         window.location.href =
-            `https://wa.me/919876543210?text=Hi`;
+            `https://wa.me/${import.meta.env.VITE_RECIPIENT_WA_NUMBER}?text=Hi`;
     };
 
     if (loading) return <Loader text="Logging in..." />;
