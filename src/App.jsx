@@ -3,6 +3,7 @@ import LeadForm from "./pages/LeadForm";
 import AdminLogin from "./pages/AdminLogin";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./component/ProtectedRoute";
+import "./App.css";
 
 function App() {
   return (

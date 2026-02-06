@@ -40,33 +40,51 @@ export default function Dashboard() {
     }
 
     return (
-        <div>
-            <button onClick={handleLogout}>Logout</button>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th><th>Mobile</th><th>Email</th>
-                        <th>Company</th><th>Gift</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {Object.entries(users).map(([id, u]) => (
-                        <tr key={id}>
-                            <td>{u.name}</td>
-                            <td>{u.mobile}</td>
-                            <td>{u.email}</td>
-                            <td>{u.companyName}</td>
-                            <td>
-                                {u.isGifted
-                                    ? <button disabled>Gifted</button>
-                                    : <button onClick={() => giftUser(id)}>
-                                        Mark Gifted
-                                    </button>}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+        <div className="dashboard-wrapper">
+            <div className="dashboard-card">
+
+                <div className="dashboard-header">
+                    <h2>Registration Dashboard</h2>
+                    <button className="logout-btn" onClick={handleLogout}>
+                        Logout
+                    </button>
+                </div>
+
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Mobile</th>
+                                <th>Email</th>
+                                <th>Company</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Object.entries(users).map(([id, u]) => (
+                                <tr key={id}>
+                                    <td data-label="Name">{u.name}</td>
+                                    <td data-label="Mobile">{u.mobile}</td>
+                                    <td data-label="Email">{u.email}</td>
+                                    <td data-label="Company">{u.companyName}</td>
+                                    <td data-label="Action">
+                                        {u.isGifted ? (
+                                            <button disabled>Gifted</button>
+                                        ) : (
+                                            <button onClick={() => giftUser(id)}>
+                                                Mark Gifted
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
         </div>
+
     );
 }

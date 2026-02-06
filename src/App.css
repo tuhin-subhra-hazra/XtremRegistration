@@ -1,42 +1,306 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* ================= VARIABLES ================= */
+:root {
+    --primary: #6366f1;
+    --secondary: #a855f7;
+    --bg-dark: #0f172a;
+    --glass: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.12);
+    --text-muted: #9aa3c7;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ================= RESET ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* ================= BODY ================= */
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18), transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.18), transparent 50%),
+        #0f172a;
+    color: #fff;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* ================= LOGIN / FORM ================= */
+.form-container {
+    max-width: 520px;
+    margin: 10vh auto;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    padding: 2.8rem;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
 }
 
-.card {
-  padding: 2em;
+.header h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-.read-the-docs {
-  color: #888;
+.header p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 2rem;
 }
+
+.form-grid {
+    display: grid;
+    gap: 1.4rem;
+}
+
+.form-group label {
+    color: var(--text-muted);
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    margin-left: 0.2rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    color: #fff;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+/* ================= BUTTON ================= */
+button {
+    padding: 0.9rem 1.6rem;
+    border-radius: 14px;
+    border: none;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ================= DASHBOARD LAYOUT ================= */
+.dashboard-wrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 24px;
+}
+
+.dashboard-card {
+    width: 100%;
+    max-width: 1400px;
+    /* DESKTOP WIDTH */
+    height: 90vh;
+    background: var(--glass);
+    backdrop-filter: blur(18px);
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65);
+}
+
+/* Ultra-wide screens */
+@media (min-width: 1600px) {
+    .dashboard-card {
+        max-width: 1600px;
+    }
+}
+
+/* ================= DASHBOARD HEADER ================= */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.dashboard-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    padding: 8px 18px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    color: #ff4d4d;
+    border-color: #ff4d4d;
+}
+
+/* ================= TABLE ================= */
+.table-container {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* scrollbar */
+.table-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+}
+
+thead th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+tbody tr {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+}
+
+tbody td {
+    padding: 16px 12px;
+    font-size: 14px;
+}
+
+tbody tr td:first-child {
+    border-radius: 14px 0 0 14px;
+}
+
+tbody tr td:last-child {
+    border-radius: 0 14px 14px 0;
+    text-align: center;
+}
+
+/* ================= STATUS BUTTONS ================= */
+tbody button {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+tbody button:disabled {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+    .dashboard-card {
+        height: auto;
+        padding: 18px;
+    }
+
+    thead {
+        display: none;
+    }
+
+    table,
+    tbody,
+    tr,
+    td {
+        display: block;
+        width: 100%;
+    }
+
+    tbody td {
+        padding: 16px 15px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+        margin-bottom: 14px;
+    }
+
+    tbody td {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
+    td:last-child {
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    td:last-child::before {
+        content: "";
+    }
+
+    tbody button {
+        width: 100%;
+    }
+
+}
+
+@media (max-width: 577px) {
+    .form-container {
+        padding: 1.8rem;
+        padding-top: 2.5rem;
+        padding-bottom: 2.5rem;
+        margin: 10vh 20px;
+    }
+
+    .dashboard-wrapper {
+        padding: 40px 20px;
+    }
+}
+
+.show-password {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 14px;
+}
+
+.show-password input {
+    cursor: pointer;
+}
+

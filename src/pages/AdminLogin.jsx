@@ -33,11 +33,38 @@ export default function AdminLogin() {
 
 
     return (
-        <form onSubmit={login}>
-            {error && <p>{error}</p>}
-            <input name="email" placeholder="Admin Email" />
-            <input name="password" type="password" placeholder="Password" />
-            <button>Login</button>
-        </form>
+        <div className="form-container">
+            <div className="header">
+                <h2>Admin Login</h2>
+                <p>Enter your credentials to access the dashboard.</p>
+            </div>
+
+            <form onSubmit={login} className="form-grid" >
+                {error && <p style={{ color: "red" }}>{error}</p>}
+                <div className="form-group">
+                    <label>Username</label>
+                    <input type="email" name="email" placeholder="Username" required />
+                </div>
+                <div className="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" name="password" placeholder="Password" required />
+                </div>
+                <div className="show-password">
+                    <input type="checkbox" id="togglePassword" onChange={(e) => {
+                        const passwordInput = document.getElementById("password");
+                        if (e.target.checked) {
+                            passwordInput.type = "text";
+                        } else {
+                            passwordInput.type = "password";
+                        }
+                    }} />
+                    <label for="togglePassword">Show password</label>
+                </div>
+                <button type="submit" id="loginBtn">
+                    <span id="btnText">Login</span>
+                    <span id="loader" className="spinner hidden"></span>
+                </button>
+            </form>
+        </div>
     );
 }
