@@ -1,9 +1,9 @@
 import { ref, onValue, update } from "firebase/database";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 import { useEffect, useState } from "react";
 import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import Loader from "../component/Loader";
+import Loader from "../../component/Loader";
 
 
 
@@ -12,7 +12,6 @@ export default function Dashboard() {
     const auth = getAuth();
     const navigate = useNavigate();
     const [loggingOut, setLoggingOut] = useState(false);
-
 
     const handleLogout = async () => {
         setLoggingOut(true);

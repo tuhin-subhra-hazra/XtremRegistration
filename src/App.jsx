@@ -1,9 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LeadForm from "./pages/LeadForm";
 import AdminLogin from "./pages/AdminLogin";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/admin/Dashboard";
 import ProtectedRoute from "./component/ProtectedRoute";
 import "./App.css";
+import AdminLayout from "./pages/admin/AdminLayout";
+import Quiz from "./component/Quiz";
+import QuizComplete from "./component/QuizComplete";
+
 
 function App() {
   return (
@@ -11,6 +15,13 @@ function App() {
       <Routes>
         <Route path="/" element={<LeadForm />} />
         <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/quiz/:quizId" element={<Quiz />} />
+        <Route path="/quiz-complete" element={<QuizComplete />} />
+        <Route path="/admin1" element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        } />
         <Route
           path="/dashboard"
           element={

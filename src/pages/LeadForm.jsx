@@ -35,8 +35,10 @@ export default function LeadForm() {
                 createdAt: Date.now()
             });
 
-            window.location.href =
-                `https://wa.me/${import.meta.env.VITE_RECIPIENT_WA_NUMBER}?text=Hi`;
+            navigate("/quiz/quiz1", { state: { userId: mobile } });
+
+            // window.location.href =
+            //     `https://wa.me/${import.meta.env.VITE_RECIPIENT_WA_NUMBER}?text=Hi`;
 
             setLoading(false);
 
