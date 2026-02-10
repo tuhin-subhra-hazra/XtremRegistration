@@ -17,7 +17,7 @@ function App() {
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/quiz/:quizId" element={<Quiz />} />
         <Route path="/quiz-complete" element={<QuizComplete />} />
-        <Route path="/admin1" element={
+        <Route path="/admin/dashboard" element={
           <ProtectedRoute>
             <AdminLayout />
           </ProtectedRoute>

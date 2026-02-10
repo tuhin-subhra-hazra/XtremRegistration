@@ -2,9 +2,12 @@ import { ref, push, get, set } from "firebase/database";
 import { db } from "../firebase";
 import { useState } from "react";
 import Loader from "../component/Loader";
+import { useNavigate } from "react-router-dom";
+
 
 export default function LeadForm() {
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         setLoading(true);
@@ -36,9 +39,6 @@ export default function LeadForm() {
             });
 
             navigate("/quiz/quiz1", { state: { userId: mobile } });
-
-            // window.location.href =
-            //     `https://wa.me/${import.meta.env.VITE_RECIPIENT_WA_NUMBER}?text=Hi`;
 
             setLoading(false);
 

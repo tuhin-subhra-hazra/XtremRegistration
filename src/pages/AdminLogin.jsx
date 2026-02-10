@@ -22,7 +22,7 @@ export default function AdminLogin() {
                 e.target.email.value,
                 e.target.password.value
             );
-            nav("/dashboard", { replace: true });
+            nav("/admin/dashboard", { replace: true });
         } catch {
             setError("Invalid login");
             setLoading(false);

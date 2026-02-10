@@ -107,11 +107,12 @@ button:disabled {
 
 /* ================= DASHBOARD LAYOUT ================= */
 .dashboard-wrapper {
-    min-height: 100vh;
+    /* min-height: 100vh; */
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 40px 24px;
+    padding: 0px 10px;
+    margin-top: 1px;
 }
 
 .dashboard-card {
@@ -156,6 +157,9 @@ button:disabled {
     border-radius: 10px;
     color: white;
     cursor: pointer;
+    position: fixed;
+    top: 20px;
+    right: 20px;
 }
 
 .logout-btn:hover {
@@ -289,7 +293,7 @@ tbody button:disabled {
     }
 
     .dashboard-wrapper {
-        padding: 40px 20px;
+        padding: 10px 0px;
     }
 }
 
@@ -305,3 +309,114 @@ tbody button:disabled {
     cursor: pointer;
 }
 
+/* ================= Quiz ================= */
+
+.quiz-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: "Inter", system-ui, sans-serif;
+}
+
+.progressWrapper {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.progressBar {
+    height: 100%;
+    background-color: #3b82f6;
+    /* Modern Blue */
+    transition: width 0.4s ease-in-out;
+}
+
+.quiz-card {
+    background-color: var(--glass);
+    padding: 30px;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(18px);
+}
+
+.optionContent {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.keyIndicator {
+    background: #f1f5f9;
+    color: #475569;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background-color: #eff6ff;
+    color: #3b82f6;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.questionText {
+    font-size: 22px;
+    line-height: 1.4;
+    margin-bottom: 24px;
+    font-weight: 700;
+}
+
+.optionsGrid {
+    display: grid;
+    /* flex-direction: column; */
+    /* grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); */
+    gap: 12px;
+}
+
+.optionButton {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.optionButton:hover {
+    background-color: #358df1;
+}
+
+.optionLetter {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f1f5f9;
+    border-radius: 8px;
+    margin-right: 15px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.optionValue {
+    font-size: 16px;
+    font-weight: 500;
+}
