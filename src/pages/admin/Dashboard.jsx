@@ -259,7 +259,7 @@ export default function Dashboard() {
 
                                         {userAnswers[id] && questions.length > 0 ? (
                                             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                                                {questions.map((q, index) => {
+                                                {questions.filter(q => q.active !== false).map((q, index) => {
                                                     const userAnswer = userAnswers[id][q.id];
                                                     const status = getAnswerStatus(userAnswer, q.correct);
                                                     return (
@@ -282,8 +282,8 @@ export default function Dashboard() {
                                                             }}>
                                                                 <div style={{ flex: 1 }}>
                                                                     <div style={{
-                                                                        fontSize: "10px",
-                                                                        color: "#6366f1",
+                                                                        fontSize: "15px",
+                                                                        color: "#F6EB61",
                                                                         fontWeight: "700",
                                                                         marginBottom: "4px"
                                                                     }}>

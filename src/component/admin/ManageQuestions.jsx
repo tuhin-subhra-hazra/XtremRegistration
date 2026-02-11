@@ -168,12 +168,15 @@ export default function ManageQuestions() {
     };
 
     return (
-        <div style={{
+        <div id="q-main" style={{
             minHeight: "100vh",
             padding: "20px",
+            paddingTop: "20px",
             background: "radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18), transparent 50%), radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.18), transparent 50%), #0f172a",
             fontFamily: "'Inter', 'Segoe UI', sans-serif"
-        }}>
+        }
+        
+        }>
             <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
                 {/* Header */}
                 <div style={{ marginBottom: "40px", textAlign: "center" }}>
@@ -195,7 +198,8 @@ export default function ManageQuestions() {
                 <div style={{
                     display: "grid",
                     gridTemplateColumns: "clamp(300px, 40%, 500px) 1fr",
-                    gap: "30px",
+                    gap: "10px",
+                    margin: "0",
                     alignItems: "start"
                 }} className="questions-grid">
                     {/* Left Column - Form */}
@@ -411,7 +415,11 @@ export default function ManageQuestions() {
                             border: "1px solid rgba(255, 255, 255, 0.12)",
                             boxShadow: "0 30px 60px rgba(0, 0, 0, 0.6)",
                             position: "sticky",
-                            top: "20px"
+                            top: "20px",
+                            maxHeight: "calc(100vh - 10px)",
+                            overflowY: "auto",
+                            display: "flex",
+                            flexDirection: "column"
                         }}>
                             <h2 style={{
                                 fontSize: "clamp(18px, 4vw, 22px)",
@@ -452,9 +460,9 @@ export default function ManageQuestions() {
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: "12px",
-                                    maxHeight: "calc(100vh - 250px)",
-                                    overflowY: "auto",
-                                    paddingRight: "8px"
+                                    paddingRight: "8px",
+                                    flex: 1,
+                                    overflowY: "auto"
                                 }}>
                                     {questions.map((q, index) => (
                                         <div
@@ -649,8 +657,8 @@ export default function ManageQuestions() {
                                                         marginBottom: "10px"
                                                     }}>
                                                         <div style={{
-                                                            fontSize: "10px",
-                                                            color: "#6366f1",
+                                                            fontSize: "20px",
+                                                            color: "#F6EB61",
                                                             fontWeight: "600"
                                                         }}>
                                                             Q{index + 1}
@@ -776,13 +784,13 @@ export default function ManageQuestions() {
                                                             onClick={() => moveQuestion(index, "up")}
                                                             disabled={index === 0}
                                                             style={{
-                                                                padding: "7px",
+                                                                padding: "2px",
                                                                 background: index === 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.08)",
-                                                                color: index === 0 ? "#4b5563" : "#94a3b8",
+                                                                color: index === 0 ? "#4b5563" : "#ffffff",
                                                                 border: "1px solid rgba(255, 255, 255, 0.08)",
                                                                 borderRadius: "6px",
-                                                                fontWeight: "600",
-                                                                fontSize: "11px",
+                                                                fontWeight: "800",
+                                                                fontSize: "20px",
                                                                 cursor: index === 0 ? "not-allowed" : "pointer",
                                                                 transition: "all 0.3s",
                                                                 opacity: index === 0 ? 0.5 : 1
@@ -796,13 +804,13 @@ export default function ManageQuestions() {
                                                             onClick={() => moveQuestion(index, "down")}
                                                             disabled={index === questions.length - 1}
                                                             style={{
-                                                                padding: "7px",
+                                                                padding: "2px",
                                                                 background: index === questions.length - 1 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.08)",
-                                                                color: index === questions.length - 1 ? "#4b5563" : "#94a3b8",
+                                                                color: index === questions.length - 1 ? "#4b5563" : "#ffffff",
                                                                 border: "1px solid rgba(255, 255, 255, 0.08)",
                                                                 borderRadius: "6px",
-                                                                fontWeight: "600",
-                                                                fontSize: "11px",
+                                                                fontWeight: "800",
+                                                                fontSize: "20px",
                                                                 cursor: index === questions.length - 1 ? "not-allowed" : "pointer",
                                                                 transition: "all 0.3s",
                                                                 opacity: index === questions.length - 1 ? 0.5 : 1
@@ -839,6 +847,10 @@ export default function ManageQuestions() {
 
           h1 {
             font-size: 28px !important;
+          }
+
+          #q-main {
+            padding: 20px 0px !important;
           }
         }
 
