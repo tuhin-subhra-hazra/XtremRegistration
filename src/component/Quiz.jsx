@@ -16,6 +16,7 @@ export default function Quiz() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [quizStarted, setQuizStarted] = useState(false);
+    const [selectedAnswers, setSelectedAnswers] = useState({});
 
     useEffect(() => {
         if (!userId) {
@@ -37,8 +38,11 @@ export default function Quiz() {
                 ...value
             }));
 
+            // Filter only active questions
+            const activeQuestions = formatted.filter(q => q.active !== false);
+
             // Sort by order field if it exists, otherwise keep original order
-            const sorted = formatted.sort((a, b) => {
+            const sorted = activeQuestions.sort((a, b) => {
                 return (a.order || 0) - (b.order || 0);
             });
 
@@ -49,19 +53,32 @@ export default function Quiz() {
 
     const handleOptionClick = async (optionKey) => {
         const currentQuestion = questions[currentIndex];
+        
+        // Store the selected answer locally
+        const newAnswers = { ...selectedAnswers, [currentQuestion.id]: optionKey };
+        setSelectedAnswers(newAnswers);
 
-        // save answer
+        // Save answer to database
         await set(
             ref(db, `answers/${quizId}/${userId}/${currentQuestion.id}`),
             optionKey
         );
+    };
 
-        // next question
+    const handleNext = () => {
         if (currentIndex + 1 < questions.length) {
             setCurrentIndex(currentIndex + 1);
-        } else {
-            navigate("/quiz-complete");
         }
+    };
+
+    const handlePrevious = () => {
+        if (currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1);
+        }
+    };
+
+    const handleSubmitQuiz = () => {
+        navigate("/quiz-complete");
     };
 
     if (loading) return <Loader text="Loading quiz..." />;
@@ -214,6 +231,7 @@ export default function Quiz() {
     }
 
     const q = questions[currentIndex];
+    const isAnswered = selectedAnswers[q.id];
 
     return (
         <div className="quiz-container">
@@ -241,11 +259,12 @@ export default function Quiz() {
                         <button
                             key={key}
                             onClick={() => handleOptionClick(key)}
-                            className="optionButton"
-                        // onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#f0f7ff")}
-                        // onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ffffff")}
+                            className={`optionButton ${selectedAnswers[q.id] === key ? 'selected' : ''}`}
+                            style={selectedAnswers[q.id] === key ? {
+                                background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                                borderColor: "#a855f7"
+                            } : {}}
                         >
-
                             <div className="optionContent">
                                 <span className="keyIndicator">{key.toUpperCase()}</span>
                                 <span className="text">{value}</span>
@@ -253,6 +272,122 @@ export default function Quiz() {
                         </button>
                     ))}
                 </div>
+
+                {/* Navigation Buttons */}
+                <div style={{
+                    display: "flex",
+                    gap: "12px",
+                    marginTop: "30px",
+                    justifyContent: "center",
+                    flexWrap: "wrap"
+                }}>
+                    <button
+                        onClick={handlePrevious}
+                        disabled={currentIndex === 0}
+                        style={{
+                            padding: "12px 24px",
+                            background: currentIndex === 0 ? "rgba(255, 255, 255, 0.1)" : "rgba(99, 102, 241, 0.2)",
+                            color: currentIndex === 0 ? "#4b5563" : "#6366f1",
+                            border: `1px solid ${currentIndex === 0 ? "rgba(255, 255, 255, 0.1)" : "rgba(99, 102, 241, 0.3)"}`,
+                            borderRadius: "8px",
+                            fontWeight: "600",
+                            fontSize: "14px",
+                            cursor: currentIndex === 0 ? "not-allowed" : "pointer",
+                            transition: "all 0.3s",
+                            opacity: currentIndex === 0 ? 0.5 : 1,
+                            minWidth: "120px"
+                        }}
+                        onMouseEnter={(e) => currentIndex > 0 && (e.target.style.background = "rgba(99, 102, 241, 0.3)")}
+                        onMouseLeave={(e) => currentIndex > 0 && (e.target.style.background = "rgba(99, 102, 241, 0.2)")}
+                    >
+                        ← Previous
+                    </button>
+
+                    {currentIndex === questions.length - 1 ? (
+                        <button
+                            onClick={handleSubmitQuiz}
+                            disabled={!isAnswered}
+                            style={{
+                                padding: "12px 24px",
+                                background: isAnswered ? "linear-gradient(135deg, #22c55e, #16a34a)" : "rgba(255, 255, 255, 0.1)",
+                                color: isAnswered ? "#fff" : "#4b5563",
+                                border: "none",
+                                borderRadius: "8px",
+                                fontWeight: "600",
+                                fontSize: "14px",
+                                cursor: isAnswered ? "pointer" : "not-allowed",
+                                transition: "all 0.3s",
+                                minWidth: "120px",
+                                boxShadow: isAnswered ? "0 5px 15px rgba(34, 197, 94, 0.3)" : "none",
+                                opacity: isAnswered ? 1 : 0.5
+                            }}
+                            onMouseEnter={(e) => {
+                                if (isAnswered) {
+                                    e.target.style.transform = "translateY(-2px)";
+                                    e.target.style.boxShadow = "0 8px 20px rgba(34, 197, 94, 0.4)";
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (isAnswered) {
+                                    e.target.style.transform = "translateY(0)";
+                                    e.target.style.boxShadow = "0 5px 15px rgba(34, 197, 94, 0.3)";
+                                }
+                            }}
+                        >
+                            Submit Quiz ✓
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleNext}
+                            disabled={!isAnswered}
+                            style={{
+                                padding: "12px 24px",
+                                background: isAnswered ? "linear-gradient(135deg, #6366f1, #a855f7)" : "rgba(255, 255, 255, 0.1)",
+                                color: isAnswered ? "#fff" : "#4b5563",
+                                border: "none",
+                                borderRadius: "8px",
+                                fontWeight: "600",
+                                fontSize: "14px",
+                                cursor: isAnswered ? "pointer" : "not-allowed",
+                                transition: "all 0.3s",
+                                minWidth: "120px",
+                                boxShadow: isAnswered ? "0 5px 15px rgba(99, 102, 241, 0.3)" : "none",
+                                opacity: isAnswered ? 1 : 0.5
+                            }}
+                            onMouseEnter={(e) => {
+                                if (isAnswered) {
+                                    e.target.style.transform = "translateY(-2px)";
+                                    e.target.style.boxShadow = "0 8px 20px rgba(99, 102, 241, 0.4)";
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (isAnswered) {
+                                    e.target.style.transform = "translateY(0)";
+                                    e.target.style.boxShadow = "0 5px 15px rgba(99, 102, 241, 0.3)";
+                                }
+                            }}
+                        >
+                            Next →
+                        </button>
+                    )}
+                </div>
+
+                {/* Answer Status Indicator */}
+                {isAnswered && (
+                    <div style={{
+                        textAlign: "center",
+                        marginTop: "20px",
+                        padding: "10px 16px",
+                        background: "rgba(34, 197, 94, 0.15)",
+                        border: "1px solid rgba(34, 197, 94, 0.3)",
+                        borderRadius: "8px",
+                        color: "#22c55e",
+                        fontSize: "13px",
+                        fontWeight: "600"
+                    }}>
+                        ✓ Answer Saved
+                    </div>
+                )}
             </div>
         </div>
     );

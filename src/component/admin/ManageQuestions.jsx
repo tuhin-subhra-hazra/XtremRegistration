@@ -11,13 +11,15 @@ export default function ManageQuestions() {
         d: ""
     });
     const [correct, setCorrect] = useState("");
+    const [active, setActive] = useState(true);
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({
         question: "",
         options: { a: "", b: "", c: "", d: "" },
-        correct: ""
+        correct: "",
+        active: true
     });
 
     // Fetch questions from database
@@ -55,7 +57,8 @@ export default function ManageQuestions() {
                 question,
                 options,
                 correct,
-                order
+                order,
+                active
             });
             alert("Question Saved ✅");
 
@@ -63,6 +66,7 @@ export default function ManageQuestions() {
             setQuestion("");
             setOptions({ a: "", b: "", c: "", d: "" });
             setCorrect("");
+            setActive(true);
         } catch (error) {
             console.error("Error saving question:", error);
             alert("Error saving question");
@@ -88,7 +92,8 @@ export default function ManageQuestions() {
         setEditData({
             question: q.question,
             options: { ...q.options },
-            correct: q.correct
+            correct: q.correct,
+            active: q.active !== false
         });
     };
 
@@ -102,7 +107,9 @@ export default function ManageQuestions() {
             await set(ref(db, `quiz/quiz1/questions/${editingId}`), {
                 question: editData.question,
                 options: editData.options,
-                correct: editData.correct
+                correct: editData.correct,
+                active: editData.active,
+                order: questions.find(q => q.id === editingId)?.order || 0
             });
             alert("Question Updated ✅");
             setEditingId(null);
@@ -117,8 +124,22 @@ export default function ManageQuestions() {
         setEditData({
             question: "",
             options: { a: "", b: "", c: "", d: "" },
-            correct: ""
+            correct: "",
+            active: true
         });
+    };
+
+    const toggleQuestionActive = async (id, currentActive) => {
+        try {
+            const question = questions.find(q => q.id === id);
+            await set(ref(db, `quiz/quiz1/questions/${id}`), {
+                ...question,
+                active: !currentActive
+            });
+        } catch (error) {
+            console.error("Error toggling question active status:", error);
+            alert("Error updating question status");
+        }
     };
 
     const moveQuestion = async (currentIndex, direction) => {
@@ -323,6 +344,38 @@ export default function ManageQuestions() {
                                 <option value="d">Option D</option>
                             </select>
 
+                            <div style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "10px",
+                                padding: "12px",
+                                background: "rgba(99, 102, 241, 0.1)",
+                                border: "1px solid rgba(99, 102, 241, 0.3)",
+                                borderRadius: "10px",
+                                marginBottom: "20px"
+                            }}>
+                                <input
+                                    type="checkbox"
+                                    checked={active}
+                                    onChange={e => setActive(e.target.checked)}
+                                    style={{
+                                        width: "18px",
+                                        height: "18px",
+                                        cursor: "pointer",
+                                        accentColor: "#6366f1"
+                                    }}
+                                />
+                                <label style={{
+                                    fontSize: "13px",
+                                    fontWeight: "600",
+                                    color: "#9aa3c7",
+                                    cursor: "pointer",
+                                    margin: 0
+                                }}>
+                                    Active Question
+                                </label>
+                            </div>
+
                             <button
                                 onClick={saveQuestion}
                                 disabled={loading}
@@ -513,6 +566,38 @@ export default function ManageQuestions() {
                                                         <option value="d">Option D</option>
                                                     </select>
 
+                                                    <div style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "8px",
+                                                        padding: "10px",
+                                                        background: "rgba(168, 85, 247, 0.1)",
+                                                        border: "1px solid rgba(168, 85, 247, 0.3)",
+                                                        borderRadius: "8px",
+                                                        marginBottom: "12px"
+                                                    }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editData.active}
+                                                            onChange={e => setEditData({ ...editData, active: e.target.checked })}
+                                                            style={{
+                                                                width: "16px",
+                                                                height: "16px",
+                                                                cursor: "pointer",
+                                                                accentColor: "#a855f7"
+                                                            }}
+                                                        />
+                                                        <label style={{
+                                                            fontSize: "11px",
+                                                            fontWeight: "600",
+                                                            color: "#d8b4fe",
+                                                            cursor: "pointer",
+                                                            margin: 0
+                                                        }}>
+                                                            Active
+                                                        </label>
+                                                    </div>
+
                                                     <div style={{ display: "flex", gap: "8px" }}>
                                                         <button
                                                             onClick={saveEditedQuestion}
@@ -558,13 +643,69 @@ export default function ManageQuestions() {
                                                 // View Mode
                                                 <div>
                                                     <div style={{
-                                                        fontSize: "10px",
-                                                        color: "#6366f1",
-                                                        fontWeight: "600",
-                                                        marginBottom: "4px"
+                                                        display: "flex",
+                                                        justifyContent: "space-between",
+                                                        alignItems: "flex-start",
+                                                        marginBottom: "10px"
                                                     }}>
-                                                        Q{index + 1}
+                                                        <div style={{
+                                                            fontSize: "10px",
+                                                            color: "#6366f1",
+                                                            fontWeight: "600"
+                                                        }}>
+                                                            Q{index + 1}
+                                                        </div>
+                                                        
+                                                        {/* Active/Inactive Toggle Switch */}
+                                                        <label style={{
+                                                            position: "relative",
+                                                            display: "inline-flex",
+                                                            alignItems: "center",
+                                                            cursor: "pointer"
+                                                        }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={q.active !== false}
+                                                                onChange={() => toggleQuestionActive(q.id, q.active !== false)}
+                                                                style={{
+                                                                    appearance: "none",
+                                                                    width: "50px",
+                                                                    height: "28px",
+                                                                    background: q.active !== false ? "rgba(34, 197, 94, 0.4)" : "rgba(239, 68, 68, 0.4)",
+                                                                    border: q.active !== false ? "2px solid #22c55e" : "2px solid #ef4444",
+                                                                    borderRadius: "20px",
+                                                                    cursor: "pointer",
+                                                                    outline: "none",
+                                                                    transition: "all 0.3s",
+                                                                    position: "relative",
+                                                                    padding: 0,
+                                                                    margin: 0
+                                                                }}
+                                                            />
+                                                            <span style={{
+                                                                position: "absolute",
+                                                                left: q.active !== false ? "26px" : "4px",
+                                                                width: "20px",
+                                                                height: "20px",
+                                                                background: q.active !== false ? "#22c55e" : "#ef4444",
+                                                                borderRadius: "50%",
+                                                                transition: "left 0.3s",
+                                                                pointerEvents: "none"
+                                                            }} />
+                                                            <span style={{
+                                                                position: "absolute",
+                                                                left: q.active !== false ? "32px" : "10px",
+                                                                fontSize: "12px",
+                                                                fontWeight: "700",
+                                                                color: "#fff",
+                                                                pointerEvents: "none",
+                                                                transition: "left 0.3s"
+                                                            }}>
+                                                                {q.active !== false ? "✓" : "✕"}
+                                                            </span>
+                                                        </label>
                                                     </div>
+
                                                     <div style={{
                                                         fontWeight: "600",
                                                         color: "#fff",

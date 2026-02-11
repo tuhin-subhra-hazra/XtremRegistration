@@ -1,4 +1,4 @@
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, remove } from "firebase/database";
 import { db } from "../../firebase";
 import { useEffect, useState } from "react";
 import Loader from "../../component/Loader";
@@ -42,6 +42,12 @@ export default function Dashboard() {
 
     const giftUser = (id) => {
         update(ref(db, `XtremUser/${id}`), { isGifted: true });
+    };
+
+    const deleteUser = (id, userName) => {
+        if (window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+            remove(ref(db, `XtremUser/${id}`));
+        }
     };
 
     const toggleExpand = (userId) => {
@@ -167,7 +173,7 @@ export default function Dashboard() {
                                         <div style={{ fontSize: "clamp(10px, 2vw, 11px)", color: "#9aa3c7", marginBottom: "4px" }}>Company</div>
                                         <div style={{ fontSize: "clamp(12px, 3vw, 14px)", fontWeight: "600", wordBreak: "break-word" }}>{u.companyName}</div>
                                     </div>
-                                    <div style={{ textAlign: "center" }}>
+                                    <div style={{ textAlign: "center", display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
                                         {u.isGifted ? (
                                             <button style={{
                                                 padding: "clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px)",
@@ -200,6 +206,34 @@ export default function Dashboard() {
                                                 Mark Gifted
                                             </button>
                                         )}
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteUser(id, u.name);
+                                            }} 
+                                            style={{
+                                                padding: "clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px)",
+                                                background: "rgba(239, 68, 68, 0.2)",
+                                                color: "#ef4444",
+                                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                borderRadius: "8px",
+                                                fontWeight: "600",
+                                                fontSize: "clamp(10px, 2vw, 12px)",
+                                                cursor: "pointer",
+                                                transition: "all 0.3s",
+                                                whiteSpace: "nowrap"
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.background = "rgba(239, 68, 68, 0.3)";
+                                                e.target.style.transform = "translateY(-2px)";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.background = "rgba(239, 68, 68, 0.2)";
+                                                e.target.style.transform = "translateY(0)";
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
 
