@@ -58,6 +58,14 @@ export default function Dashboard() {
         return userAnswer === correctAnswer ? { isCorrect: true, icon: "✓" } : { isCorrect: false, icon: "✗" };
     };
 
+    // Compute score (number of correct answers) for a given user
+    const getScore = (userId) => {
+        const answers = userAnswers[userId] || {};
+        const visibleQuestions = questions.filter(q => q.active !== false);
+        if (visibleQuestions.length === 0) return 0;
+        return visibleQuestions.reduce((acc, q) => acc + (answers[q.id] === q.correct ? 1 : 0), 0);
+    };
+
     // Filter users based on search query
     const filteredUsers = Object.entries(users).filter(([id, u]) => {
         const query = searchQuery.toLowerCase();
@@ -144,7 +152,7 @@ export default function Dashboard() {
                                         cursor: "pointer",
                                         transition: "all 0.3s",
                                         display: "grid",
-                                        gridTemplateColumns: "2fr 1.5fr 2fr 1.5fr auto",
+                                        gridTemplateColumns: "2fr 1.5fr 2fr 1.5fr 110px 200px",
                                         gap: "15px",
                                         alignItems: "center"
                                     }}
@@ -173,7 +181,13 @@ export default function Dashboard() {
                                         <div style={{ fontSize: "clamp(10px, 2vw, 11px)", color: "#9aa3c7", marginBottom: "4px" }}>Company</div>
                                         <div style={{ fontSize: "clamp(12px, 3vw, 14px)", fontWeight: "600", wordBreak: "break-word" }}>{u.companyName}</div>
                                     </div>
-                                    <div style={{ textAlign: "center", display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+                                    <div style={{ textAlign: "center" }}>
+                                        <div style={{ fontSize: "clamp(10px, 2vw, 11px)", color: "#9aa3c7", marginBottom: "4px" }}>Score</div>
+                                        <div style={{ fontSize: "clamp(12px, 3vw, 14px)", fontWeight: "700", color: "#F6EB61" }}>
+                                            {getScore(id)} / {questions.filter(q => q.active !== false).length}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: "center", display: "flex", gap: "8px", flexWrap: "nowrap", justifyContent: "flex-end", alignItems: "center", minWidth: 200, paddingRight: "8px" }}>
                                         {u.isGifted ? (
                                             <button style={{
                                                 padding: "clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px)",

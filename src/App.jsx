@@ -22,14 +22,6 @@ function App() {
             <AdminLayout />
           </ProtectedRoute>
         } />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
       </Routes>
     </BrowserRouter>
   );
