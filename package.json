@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
-    "hostpreview": "vite preview --host 0.0.0.0"
+    "startOnVPS": "serve -s dist -l tcp://0.0.0.0:3032",
+    "hostpreview": "vite preview --host 0.0.0.0",
+    "pm2": "pm2 start node --name xtrem-app -- node_modules/serve/build/main.js -s dist -l 3032"
   },
   "dependencies": {
     "firebase": "^12.8.0",
