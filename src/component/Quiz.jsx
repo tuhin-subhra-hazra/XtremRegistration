@@ -241,7 +241,7 @@ export default function Quiz() {
             <div className="progressWrapper">
                 <div className="progressBar"
                     style={{
-                        width: `${((currentIndex + 1) / questions.length) * 100}%`
+                        width: `${((currentIndex) / questions.length) * 100}%`
                     }}
                 />
             </div>
