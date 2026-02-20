@@ -4,6 +4,7 @@ import { ref, get, set } from "firebase/database";
 import { db } from "../firebase";
 import "../App.css";
 import Loader from "./Loader";
+import ProductHeader from "./ProductHeader";
 
 export default function Quiz() {
     const { quizId } = useParams();
@@ -234,7 +235,9 @@ export default function Quiz() {
     const isAnswered = selectedAnswers[q.id];
 
     return (
-        <div className="quiz-container">
+        <div>
+            <ProductHeader />
+            <div className="quiz-container">
             <h1 className="quiz-title">Quiz Time!</h1>
             <br />
             {/* Progress Bar */}
@@ -389,6 +392,7 @@ export default function Quiz() {
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 

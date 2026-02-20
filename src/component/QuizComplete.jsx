@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../App.css";
+import ProductHeader from "./ProductHeader";
 
 export default function QuizComplete() {
 
@@ -13,7 +14,9 @@ export default function QuizComplete() {
   }, []);
 
   return (
-    <div style={{
+    <div>
+      <ProductHeader />
+      <div style={{
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -31,6 +34,7 @@ export default function QuizComplete() {
         <p style={{ color: "#c2c2c2ff", fontSize: "1.1rem" }}>Thank you for participating.</p>
         {/* You could add a 'Restart' button here */}
       </div>
+    </div>
     </div>
   );
 }

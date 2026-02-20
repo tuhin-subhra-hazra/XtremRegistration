@@ -2,6 +2,7 @@ import { ref, push, get, set } from "firebase/database";
 import { db } from "../firebase";
 import { useState } from "react";
 import Loader from "../component/Loader";
+import ProductHeader from "../component/ProductHeader";
 import { useNavigate } from "react-router-dom";
 
 
@@ -52,39 +53,42 @@ export default function LeadForm() {
     if (loading) return <Loader text="Loading ..." />;
 
     return (
-        <div className="form-container">
-            <div className="header">
-                <h2>Let's Connect</h2>
-                <p>Fill out the details below to get started.</p>
+        <div>
+            <ProductHeader />
+            <div className="form-container">
+                <div className="header">
+                    <h2>Let's Connect</h2>
+                    <p>Fill out the details below to get started.</p>
 
-                <form onSubmit={handleSubmit} className="form-grid">
-                    <div className="form-group">
-                        <label>Full Name</label>
-                        <input type="text" name="name" placeholder="Enter your name" autoComplete="name" required />
-                    </div>
+                    <form onSubmit={handleSubmit} className="form-grid">
+                        <div className="form-group">
+                            <label>Full Name</label>
+                            <input type="text" name="name" placeholder="Enter your name" autoComplete="name" required />
+                        </div>
 
-                    <div className="form-group">
-                        <label>Mobile No.</label>
-                        <input type="tel" name="mobile" maxLength="10" pattern="[0-9]{10}"
-                            placeholder="Enter your mobile number" autoComplete="tel" required />
-                    </div>
+                        <div className="form-group">
+                            <label>Mobile No.</label>
+                            <input type="tel" name="mobile" maxLength="10" pattern="[0-9]{10}"
+                                placeholder="Enter your mobile number" autoComplete="tel" required />
+                        </div>
 
-                    <div className="form-group">
-                        <label>Work Email</label>
-                        <input type="email" name="email" placeholder="name@company.com" autoComplete="email" required />
-                    </div>
+                        <div className="form-group">
+                            <label>Work Email</label>
+                            <input type="email" name="email" placeholder="name@company.com" autoComplete="email" required />
+                        </div>
 
-                    <div className="form-group">
-                        <label>Company Name</label>
-                        <input type="text" name="companyName" placeholder="Acme Inc." autoComplete="organization" required />
-                    </div>
+                        <div className="form-group">
+                            <label>Company Name</label>
+                            <input type="text" name="companyName" placeholder="Acme Inc." autoComplete="organization" required />
+                        </div>
 
-                    <button type="submit" id="submitBtn">
-                        <span id="btnText">Submit Request</span>
-                        <span id="loader" className="spinner hidden"></span>
-                    </button>
-                </form>
+                        <button type="submit" id="submitBtn">
+                            <span id="btnText">Submit Request</span>
+                            <span id="loader" className="spinner hidden"></span>
+                        </button>
+                    </form>
 
+                </div>
             </div>
         </div>
     );

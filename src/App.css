@@ -29,7 +29,7 @@ body {
 /* ================= LOGIN / FORM ================= */
 .form-container {
     max-width: 520px;
-    margin: 10vh auto;
+    margin: 5vh auto;
     background: var(--glass);
     backdrop-filter: blur(20px);
     padding: 2.8rem;
@@ -289,7 +289,7 @@ tbody button:disabled {
         padding: 1.8rem;
         padding-top: 2.5rem;
         padding-bottom: 2.5rem;
-        margin: 10vh 20px;
+        margin: 5vh 20px;
     }
 
     .dashboard-wrapper {
