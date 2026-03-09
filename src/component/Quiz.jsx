@@ -47,22 +47,99 @@ export default function Quiz() {
                 return (a.order || 0) - (b.order || 0);
             });
 
-            setQuestions(sorted);
+            // sanitize options to avoid nested objects
+            const sanitized = sorted.map(q => {
+                if (q.options) {
+                    if (Array.isArray(q.options)) {
+                        q.options = q.options.map(opt => {
+                            if (opt && typeof opt.text === "object") {
+                                return { ...opt, text: opt.text.text || JSON.stringify(opt.text) };
+                            }
+                            return opt;
+                        });
+                    } else if (typeof q.options === "object") {
+                        // object-of-values; convert inner objects to strings if necessary
+                        const cleanObj = {};
+                        Object.entries(q.options).forEach(([k, v]) => {
+                            if (v && typeof v === "object") {
+                                cleanObj[k] = v.text || JSON.stringify(v);
+                            } else {
+                                cleanObj[k] = v;
+                            }
+                        });
+                        q.options = cleanObj;
+                    }
+                }
+                return q;
+            });
+
+            setQuestions(sanitized);
         }
         setLoading(false);
     };
 
     const handleOptionClick = async (optionKey) => {
         const currentQuestion = questions[currentIndex];
-        
+        if (!currentQuestion) return;
+
         // Store the selected answer locally
         const newAnswers = { ...selectedAnswers, [currentQuestion.id]: optionKey };
         setSelectedAnswers(newAnswers);
 
-        // Save answer to database
+        // Save answer to database (guard against missing identifiers)
+        if (!quizId || !userId) {
+            console.error("Unable to save answer, quizId or userId missing", { quizId, userId });
+            return;
+        }
+        const path = `answers/${quizId}/${userId}/${currentQuestion.id}`;
+        try {
+            await set(ref(db, path), optionKey);
+            console.log("saved answer to", path, optionKey);
+        } catch (err) {
+            console.error("Failed to save answer", path, err);
+        }
+    };
+
+    const handleMultipleChoiceClick = async (optionKey) => {
+        const currentQuestion = questions[currentIndex];
+        if (!currentQuestion) return;
+        const currentSelection = selectedAnswers[currentQuestion.id] || [];
+        
+        // Toggle the option in the array
+        let newSelection;
+        if (Array.isArray(currentSelection)) {
+            if (currentSelection.includes(optionKey)) {
+                newSelection = currentSelection.filter(item => item !== optionKey);
+            } else {
+                newSelection = [...currentSelection, optionKey];
+            }
+        } else {
+            newSelection = [optionKey];
+        }
+        
+        // Store the selected answers locally
+        const newAnswers = { ...selectedAnswers, [currentQuestion.id]: newSelection };
+        setSelectedAnswers(newAnswers);
+
+        // Save answers array to database
+        if (!quizId || !userId) {
+            console.error("Unable to save multiple choice answer, missing ids", { quizId, userId });
+            return;
+        }
+        const path = `answers/${quizId}/${userId}/${currentQuestion.id}`;
+        try {
+            await set(ref(db, path), newSelection);
+            console.log("saved multiple answer to", path, newSelection);
+        } catch (err) {
+            console.error("Failed to save multiple choice answer", path, err);
+        }
+    };
+
+    const saveTextAnswer = async (questionId, textValue) => {
+        // Save text answer to database
         await set(
-            ref(db, `answers/${quizId}/${userId}/${currentQuestion.id}`),
-            optionKey
+            ref(db, `answers/${quizId}/${userId}/${questionId}`),
+            textValue
         );
     };
 
@@ -232,7 +309,30 @@ export default function Quiz() {
     }
 
     const q = questions[currentIndex];
-    const isAnswered = selectedAnswers[q.id];
+
+    // helper to safely render option text or id
+    const renderValue = (val) => {
+        if (val == null) return "";
+        if (typeof val === "object") {
+            // if object has text property, use that
+            if ("text" in val) return String(val.text);
+            if ("id" in val) return String(val.id);
+            return JSON.stringify(val);
+        }
+        return String(val);
+    };
+
+    // Handle different question types
+    const isConsent = q.type === "consent";
+    const isText = q.type === "text";
+    const isSingleChoice = q.type === "single" || !q.type; // Default to single if no type
+    const isMultipleChoice = q.type === "multiple";
+    
+    // Check if question is answered
+    const answer = selectedAnswers[q.id];
+    const isAnswered = isMultipleChoice 
+        ? Array.isArray(answer) && answer.length > 0
+        : answer;
 
     return (
         <div>
@@ -256,25 +356,242 @@ export default function Quiz() {
             <br />
 
             <div className="quiz-card">
-                <h2 className="questionText">{q.question}</h2>
-                <div className="optionsGrid">
-                    {Object.entries(q.options).map(([key, value]) => (
+                <h2 className="questionText">
+                    {isConsent ? "📋 Consent" : `Question ${currentIndex + 1}`}: {q.question || q.consentText}
+                </h2>
+                
+                {isConsent ? (
+                    // Consent Question
+                    <div className="optionsGrid">
                         <button
-                            key={key}
-                            onClick={() => handleOptionClick(key)}
-                            className={`optionButton ${selectedAnswers[q.id] === key ? 'selected' : ''}`}
-                            style={selectedAnswers[q.id] === key ? {
-                                background: "linear-gradient(135deg, #6366f1, #a855f7)",
-                                borderColor: "#a855f7"
-                            } : {}}
+                            onClick={() => handleOptionClick("yes")}
+                            style={{
+                                padding: "20px",
+                                background: selectedAnswers[q.id] === "yes" ? "rgba(34, 197, 94, 0.3)" : "rgba(34, 197, 94, 0.1)",
+                                color: "#22c55e",
+                                border: `2px solid ${selectedAnswers[q.id] === "yes" ? "#22c55e" : "rgba(34, 197, 94, 0.2)"}`,
+                                borderRadius: "10px",
+                                fontWeight: "600",
+                                fontSize: "18px",
+                                cursor: "pointer",
+                                transition: "all 0.3s"
+                            }}
+                            className={`optionButton ${selectedAnswers[q.id] === "yes" ? 'selected' : ''}`}
                         >
-                            <div className="optionContent">
-                                <span className="keyIndicator">{key.toUpperCase()}</span>
-                                <span className="text">{value}</span>
-                            </div>
+                            ✓ Yes, I Agree
                         </button>
-                    ))}
-                </div>
+                        <button
+                            onClick={() => handleOptionClick("no")}
+                            style={{
+                                padding: "20px",
+                                background: selectedAnswers[q.id] === "no" ? "rgba(239, 68, 68, 0.3)" : "rgba(239, 68, 68, 0.1)",
+                                color: "#ef4444",
+                                border: `2px solid ${selectedAnswers[q.id] === "no" ? "#ef4444" : "rgba(239, 68, 68, 0.2)"}`,
+                                borderRadius: "10px",
+                                fontWeight: "600",
+                                fontSize: "18px",
+                                cursor: "pointer",
+                                transition: "all 0.3s"
+                            }}
+                            className={`optionButton ${selectedAnswers[q.id] === "no" ? 'selected' : ''}`}
+                        >
+                            ✕ No, I Disagree
+                        </button>
+                    </div>
+                ) : isText ? (
+                    // Text Answer Question
+                    <div style={{ marginTop: "20px" }}>
+                        <textarea
+                            placeholder="Type your answer here..."
+                            value={selectedAnswers[q.id] || ""}
+                            onChange={(e) => {
+                                const newAnswers = { ...selectedAnswers, [q.id]: e.target.value };
+                                setSelectedAnswers(newAnswers);
+                                // Save text answer to database
+                                saveTextAnswer(q.id, e.target.value);
+                            }}
+                            style={{
+                                width: "100%",
+                                minHeight: "120px",
+                                padding: "15px",
+                                border: "1px solid rgba(99, 102, 241, 0.3)",
+                                borderRadius: "10px",
+                                background: "rgba(0, 0, 0, 0.3)",
+                                color: "#fff",
+                                fontSize: "14px",
+                                fontFamily: "inherit",
+                                outline: "none",
+                                boxSizing: "border-box"
+                            }}
+                        />
+                    </div>
+                ) : (
+                    // Single/Multiple Choice Questions
+                    <div className="optionsGrid">
+                        {q.options && Array.isArray(q.options) ? (
+                            // New format: array of options
+                            q.options.map((opt) => {
+                                const optionKey = renderValue(opt.id);
+                                const isMultiple = isMultipleChoice;
+                                const currentSelection = selectedAnswers[q.id] || (isMultiple ? [] : null);
+                                const isSelected = isMultiple
+                                    ? Array.isArray(currentSelection) && currentSelection.includes(optionKey)
+                                    : currentSelection === optionKey;
+                                
+                                return (
+                                    <button
+                                        key={optionKey}
+                                        onClick={() => isMultiple ? handleMultipleChoiceClick(optionKey) : handleOptionClick(optionKey)}
+                                        className={`optionButton ${isSelected ? 'selected' : ''}`}
+                                        style={isSelected ? {
+                                            background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                                            borderColor: "#a855f7"
+                                        } : {}}
+                                    >
+                                        <div className="optionContent">
+                                            {isMultiple && (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => {}}
+                                                    style={{
+                                                        marginRight: "8px",
+                                                        width: "18px",
+                                                        height: "18px",
+                                                        cursor: "pointer",
+                                                        accentColor: "#a855f7"
+                                                    }}
+                                                />
+                                            )}
+                                            <span className="keyIndicator">{renderValue(opt.id)}</span>
+                                            <span className="text">{renderValue(opt.text)}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        ) : q.options && typeof q.options === "object" ? (
+                            // Old format: object with keys
+                            Object.entries(q.options).map(([key, value]) => {
+                                const isMultiple = isMultipleChoice;
+                                const currentSelection = selectedAnswers[q.id] || (isMultiple ? [] : null);
+                                const optKey = renderValue(key);
+                                const optVal = renderValue(value);
+                                const isSelected = isMultiple
+                                    ? Array.isArray(currentSelection) && currentSelection.includes(optKey)
+                                    : currentSelection === optKey;
+                                
+                                return (
+                                    <button
+                                        key={optKey}
+                                        onClick={() => isMultiple ? handleMultipleChoiceClick(optKey) : handleOptionClick(optKey)}
+                                        className={`optionButton ${isSelected ? 'selected' : ''}`}
+                                        style={isSelected ? {
+                                            background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                                            borderColor: "#a855f7"
+                                        } : {}}
+                                    >
+                                        <div className="optionContent">
+                                            {isMultiple && (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => {}}
+                                                    style={{
+                                                        marginRight: "8px",
+                                                        width: "18px",
+                                                        height: "18px",
+                                                        cursor: "pointer",
+                                                        accentColor: "#a855f7"
+                                                    }}
+                                                />
+                                            )}
+                                            <span className="keyIndicator">{optKey.toUpperCase()}</span>
+                                            <span className="text">{optVal}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        ) : null}
+                        {q.includeOther && (
+                            <div style={{
+                                marginTop: "15px",
+                                padding: "15px",
+                                background: "rgba(99, 102, 241, 0.1)",
+                                border: "1px solid rgba(99, 102, 241, 0.3)",
+                                borderRadius: "10px"
+                            }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: "#9aa3c7", cursor: "pointer" }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={
+                                            isMultipleChoice
+                                                ? Array.isArray(selectedAnswers[q.id]) && selectedAnswers[q.id].some(v => v.startsWith("other"))
+                                                : typeof selectedAnswers[q.id] === "string" && selectedAnswers[q.id].startsWith("other")
+                                        }
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            if (isMultipleChoice) {
+                                                const curr = Array.isArray(selectedAnswers[q.id]) ? [...selectedAnswers[q.id]] : [];
+                                                let newSelection = curr.filter(v => !v.startsWith("other"));
+                                                if (checked) newSelection.push("other");
+                                                const newAnswers = { ...selectedAnswers, [q.id]: newSelection };
+                                                setSelectedAnswers(newAnswers);
+                                                set(ref(db, `answers/${quizId}/${userId}/${q.id}`), newSelection);
+                                            } else {
+                                                if (checked) {
+                                                    const newAnswers = { ...selectedAnswers, [q.id]: "other" };
+                                                    setSelectedAnswers(newAnswers);
+                                                    set(ref(db, `answers/${quizId}/${userId}/${q.id}`), "other");
+                                                } else {
+                                                    const newAnswers = { ...selectedAnswers };
+                                                    delete newAnswers[q.id];
+                                                    setSelectedAnswers(newAnswers);
+                                                    set(ref(db, `answers/${quizId}/${userId}/${q.id}`), null);
+                                                }
+                                            }
+                                        }}
+                                        style={{ cursor: "pointer", accentColor: "#6366f1" }}
+                                    />
+                                    Other:
+                                </label>
+                                {(isMultipleChoice
+                                    ? Array.isArray(selectedAnswers[q.id]) && selectedAnswers[q.id].some(v => v.startsWith("other"))
+                                    : typeof selectedAnswers[q.id] === "string" && selectedAnswers[q.id].startsWith("other")) && (
+                                    <input
+                                        type="text"
+                                        placeholder="Please specify..."
+                                        onChange={(e) => {
+                                            const value = `other: ${e.target.value}`;
+                                            if (isMultipleChoice) {
+                                                const curr = Array.isArray(selectedAnswers[q.id]) ? [...selectedAnswers[q.id]] : [];
+                                                const idx = curr.findIndex(v => v.startsWith("other"));
+                                                if (idx >= 0) curr[idx] = value;
+                                                else curr.push(value);
+                                                const newAnswers = { ...selectedAnswers, [q.id]: curr };
+                                                setSelectedAnswers(newAnswers);
+                                                set(ref(db, `answers/${quizId}/${userId}/${q.id}`), curr);
+                                            } else {
+                                                const newAnswers = { ...selectedAnswers, [q.id]: value };
+                                                setSelectedAnswers(newAnswers);
+                                                set(ref(db, `answers/${quizId}/${userId}/${q.id}`), value);
+                                            }
+                                        }}
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "10px",
+                                            padding: "10px",
+                                            border: "1px solid rgba(99, 102, 241, 0.3)",
+                                            borderRadius: "8px",
+                                            background: "rgba(0, 0, 0, 0.3)",
+                                            color: "#fff",
+                                            outline: "none"
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Navigation Buttons */}
                 <div style={{

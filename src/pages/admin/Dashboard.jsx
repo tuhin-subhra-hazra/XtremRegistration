@@ -54,16 +54,14 @@ export default function Dashboard() {
         setExpandedUser(expandedUser === userId ? null : userId);
     };
 
-    const getAnswerStatus = (userAnswer, correctAnswer) => {
-        return userAnswer === correctAnswer ? { isCorrect: true, icon: "✓" } : { isCorrect: false, icon: "✗" };
-    };
-
-    // Compute score (number of correct answers) for a given user
-    const getScore = (userId) => {
-        const answers = userAnswers[userId] || {};
-        const visibleQuestions = questions.filter(q => q.active !== false);
-        if (visibleQuestions.length === 0) return 0;
-        return visibleQuestions.reduce((acc, q) => acc + (answers[q.id] === q.correct ? 1 : 0), 0);
+    const renderVal = (val) => {
+        if (val == null) return "";
+        if (typeof val === "object") {
+            if ("text" in val) return String(val.text);
+            if ("id" in val) return String(val.id);
+            return JSON.stringify(val);
+        }
+        return String(val);
     };
 
     // Filter users based on search query
@@ -152,7 +150,7 @@ export default function Dashboard() {
                                         cursor: "pointer",
                                         transition: "all 0.3s",
                                         display: "grid",
-                                        gridTemplateColumns: "2fr 1.5fr 2fr 1.5fr 110px 200px",
+                                        gridTemplateColumns: "2fr 1fr 2.5fr 1.5fr 80px 80px",
                                         gap: "15px",
                                         alignItems: "center"
                                     }}
@@ -181,13 +179,8 @@ export default function Dashboard() {
                                         <div style={{ fontSize: "clamp(10px, 2vw, 11px)", color: "#9aa3c7", marginBottom: "4px" }}>Company</div>
                                         <div style={{ fontSize: "clamp(12px, 3vw, 14px)", fontWeight: "600", wordBreak: "break-word" }}>{u.companyName}</div>
                                     </div>
-                                    <div style={{ textAlign: "center" }}>
-                                        <div style={{ fontSize: "clamp(10px, 2vw, 11px)", color: "#9aa3c7", marginBottom: "4px" }}>Score</div>
-                                        <div style={{ fontSize: "clamp(12px, 3vw, 14px)", fontWeight: "700", color: "#F6EB61" }}>
-                                            {getScore(id)} / {questions.filter(q => q.active !== false).length}
-                                        </div>
-                                    </div>
-                                    <div style={{ textAlign: "center", display: "flex", gap: "8px", flexWrap: "nowrap", justifyContent: "flex-end", alignItems: "center", minWidth: 200, paddingRight: "8px" }}>
+
+                                    <div style={{ textAlign: "center", display: "flex", gap: "8px", flexWrap: "nowrap" }}>
                                         {u.isGifted ? (
                                             <button style={{
                                                 padding: "clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px)",
@@ -275,13 +268,12 @@ export default function Dashboard() {
                                             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                                                 {questions.filter(q => q.active !== false).map((q, index) => {
                                                     const userAnswer = userAnswers[id][q.id];
-                                                    const status = getAnswerStatus(userAnswer, q.correct);
                                                     return (
                                                         <div
                                                             key={q.id}
                                                             style={{
                                                                 background: "rgba(0, 0, 0, 0.3)",
-                                                                border: `1px solid ${status.isCorrect ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
+                                                                border: "1px solid rgba(99, 102, 241, 0.3)",
                                                                 borderRadius: "10px",
                                                                 padding: "clamp(12px, 3vw, 14px)",
                                                                 transition: "all 0.3s"
@@ -289,94 +281,235 @@ export default function Dashboard() {
                                                         >
                                                             <div style={{
                                                                 display: "flex",
-                                                                justifyContent: "space-between",
                                                                 alignItems: "flex-start",
                                                                 marginBottom: "10px",
                                                                 gap: "10px"
                                                             }}>
-                                                                <div style={{ flex: 1 }}>
-                                                                    <div style={{
-                                                                        fontSize: "15px",
-                                                                        color: "#F6EB61",
-                                                                        fontWeight: "700",
-                                                                        marginBottom: "4px"
-                                                                    }}>
-                                                                        Q{index + 1}
-                                                                    </div>
-                                                                    <div style={{
-                                                                        fontSize: "clamp(12px, 3vw, 13px)",
-                                                                        fontWeight: "600",
-                                                                        color: "#fff",
-                                                                        lineHeight: "1.5"
-                                                                    }}>
-                                                                        {q.question}
-                                                                    </div>
+                                                                <div style={{
+                                                                    fontSize: "15px",
+                                                                    color: "#F6EB61",
+                                                                    fontWeight: "700",
+                                                                    marginBottom: "4px"
+                                                                }}>
+                                                                    Q{index + 1}
                                                                 </div>
                                                                 <div style={{
-                                                                    display: "flex",
-                                                                    alignItems: "center",
-                                                                    justifyContent: "center",
-                                                                    minWidth: "32px",
-                                                                    height: "32px",
-                                                                    borderRadius: "50%",
-                                                                    background: status.isCorrect ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)",
-                                                                    color: status.isCorrect ? "#22c55e" : "#ef4444",
-                                                                    fontWeight: "700",
-                                                                    fontSize: "16px",
-                                                                    flexShrink: 0
+                                                                    fontSize: "clamp(12px, 3vw, 13px)",
+                                                                    fontWeight: "600",
+                                                                    color: "#fff",
+                                                                    lineHeight: "1.5"
                                                                 }}>
-                                                                    {status.icon}
+                                                                    {q.question}
                                                                 </div>
                                                             </div>
 
                                                             <div style={{ marginBottom: "10px" }}>
-                                                                <div className="options-grid" style={{
-                                                                    display: "grid",
-                                                                    gridTemplateColumns: "1fr 1fr",
-                                                                    gap: "8px"
-                                                                }}>
-                                                                    {Object.entries(q.options).map(([key, value]) => {
-                                                                        const isUserAnswer = userAnswer === key;
-                                                                        const isCorrect = q.correct === key;
-                                                                        let bgColor = "rgba(255, 255, 255, 0.02)";
-                                                                        let borderColor = "rgba(255, 255, 255, 0.08)";
-                                                                        let textColor = "#9aa3c7";
+                                                                {q.type === "text" ? (
+                                                                    <div style={{
+                                                                        padding: "clamp(10px, 2vw, 12px)",
+                                                                        background: "rgba(99, 102, 241, 0.15)",
+                                                                        border: "1px solid rgba(99, 102, 241, 0.3)",
+                                                                        borderRadius: "8px",
+                                                                        borderLeft: "4px solid #6366f1"
+                                                                    }}>
+                                                                        <div style={{ fontSize: "clamp(11px, 2vw, 12px)", fontWeight: "600", color: "#9aa3c7", marginBottom: "6px" }}>✎ Text Response:</div>
+                                                                        <div style={{ fontSize: "clamp(11px, 2vw, 13px)", color: "#fff", lineHeight: "1.5" }}>
+                                                                            {userAnswer || <span style={{ color: "#9aa3c7", fontStyle: "italic" }}>No response</span>}
+                                                                        </div>
+                                                                    </div>
+                                                                ) : q.type === "consent" ? (
+                                                                    <div>
+                                                                        {/* Display consent text */}
+                                                                        {(q.question || q.consentText) && (
+                                                                            <div style={{
+                                                                                padding: "clamp(10px, 2vw, 12px)",
+                                                                                background: "rgba(99, 102, 241, 0.1)",
+                                                                                border: "1px solid rgba(99, 102, 241, 0.3)",
+                                                                                borderRadius: "8px",
+                                                                                marginBottom: "12px",
+                                                                                borderLeft: "4px solid #6366f1"
+                                                                            }}>
+                                                                                <div style={{ fontSize: "clamp(11px, 2vw, 12px)", fontWeight: "600", color: "#9aa3c7", marginBottom: "6px" }}>
+                                                                                    📋 Consent Text:
+                                                                                </div>
+                                                                                <div style={{ fontSize: "clamp(11px, 2vw, 13px)", color: "#fff", lineHeight: "1.5" }}>
+                                                                                    {q.question || q.consentText}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
 
-                                                                        if (isCorrect) {
-                                                                            bgColor = "rgba(34, 197, 94, 0.15)";
-                                                                            borderColor = "rgba(34, 197, 94, 0.4)";
-                                                                            textColor = "#22c55e";
-                                                                        } else if (isUserAnswer && !isCorrect) {
-                                                                            bgColor = "rgba(239, 68, 68, 0.15)";
-                                                                            borderColor = "rgba(239, 68, 68, 0.4)";
-                                                                            textColor = "#ef4444";
+                                                                        {/* Yes/No options */}
+                                                                        <div style={{
+                                                                            display: "grid",
+                                                                            gridTemplateColumns: "1fr 1fr",
+                                                                            gap: "8px"
+                                                                        }}>
+                                                                            <div style={{
+                                                                                padding: "clamp(10px, 2vw, 12px)",
+                                                                                background: userAnswer === "yes" ? "rgba(34, 197, 94, 0.2)" : "rgba(34, 197, 94, 0.05)",
+                                                                                border: userAnswer === "yes" ? "2px solid #22c55e" : "1px solid rgba(34, 197, 94, 0.2)",
+                                                                                borderRadius: "8px",
+                                                                                textAlign: "center",
+                                                                                color: userAnswer === "yes" ? "#22c55e" : "#9aa3c7",
+                                                                                fontWeight: userAnswer === "yes" ? "700" : "500",
+                                                                                fontSize: "clamp(12px, 2vw, 13px)"
+                                                                            }}>
+                                                                                ✓ Yes {userAnswer === "yes" && "- Selected"}
+                                                                            </div>
+                                                                            <div style={{
+                                                                                padding: "clamp(10px, 2vw, 12px)",
+                                                                                background: userAnswer === "no" ? "rgba(239, 68, 68, 0.2)" : "rgba(239, 68, 68, 0.05)",
+                                                                                border: userAnswer === "no" ? "2px solid #ef4444" : "1px solid rgba(239, 68, 68, 0.2)",
+                                                                                borderRadius: "8px",
+                                                                                textAlign: "center",
+                                                                                color: userAnswer === "no" ? "#ef4444" : "#9aa3c7",
+                                                                                fontWeight: userAnswer === "no" ? "700" : "500",
+                                                                                fontSize: "clamp(12px, 2vw, 13px)"
+                                                                            }}>
+                                                                                ✕ No {userAnswer === "no" && "- Selected"}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="options-grid" style={{
+                                                                        display: "grid",
+                                                                        gridTemplateColumns: "1fr 1fr",
+                                                                        gap: "8px"
+                                                                    }}>
+                                                                        {q.options && Array.isArray(q.options) ? (
+                                                                            q.options.map(opt => {
+                                                                                const key = renderVal(opt.id);
+                                                                                const value = renderVal(opt.text);
+                                                                                const isUserAnswer = Array.isArray(userAnswer) 
+                                                                                    ? userAnswer.includes(key)
+                                                                                    : userAnswer === key;
+                                                                                const isCorrect = q.correct && renderVal(q.correct) === key;
+                                                                                let bgColor = "rgba(255, 255, 255, 0.02)";
+                                                                                let borderColor = "rgba(255, 255, 255, 0.08)";
+                                                                                let textColor = "#9aa3c7";
+
+                                                                                if (isCorrect) {
+                                                                                    bgColor = "rgba(34, 197, 94, 0.15)";
+                                                                                    borderColor = "rgba(34, 197, 94, 0.4)";
+                                                                                    textColor = "#22c55e";
+                                                                                } else if (isUserAnswer && !isCorrect) {
+                                                                                    bgColor = "rgba(239, 68, 68, 0.15)";
+                                                                                    borderColor = "rgba(239, 68, 68, 0.4)";
+                                                                                    textColor = "#ef4444";
+                                                                                }
+
+                                                                                return (
+                                                                                    <div
+                                                                                        key={key}
+                                                                                        style={{
+                                                                                            padding: "clamp(8px, 2vw, 10px) clamp(10px, 2vw, 12px)",
+                                                                                            background: bgColor,
+                                                                                            border: `1px solid ${borderColor}`,
+                                                                                            borderRadius: "8px",
+                                                                                            fontSize: "clamp(11px, 2vw, 12px)",
+                                                                                            color: textColor,
+                                                                                            fontWeight: isUserAnswer || isCorrect ? "600" : "400"
+                                                                                        }}
+                                                                                    >
+                                                                                        <div style={{ fontWeight: "700", marginBottom: "2px" }}>
+                                                                                            
+                                                                                        </div>
+                                                                                        {key}. {value}
+                                                                                        {isUserAnswer && <div style={{ marginTop: "4px", fontSize: "clamp(9px, 2vw, 10px)" }}>👤 Answered</div>}
+                                                                                        {isCorrect && <div style={{ marginTop: "4px", fontSize: "clamp(9px, 2vw, 10px)" }}>✓ Correct</div>}
+                                                                                    </div>
+                                                                                );
+                                                                            })
+                                                                        ) : q.options && typeof q.options === "object" ? (
+                                                                            Object.entries(q.options).map(([key, value]) => {
+                                                                                const k = renderVal(key);
+                                                                                const v = renderVal(value);
+                                                                                const isUserAnswer = Array.isArray(userAnswer)
+                                                                                    ? userAnswer.includes(k)
+                                                                                    : userAnswer === k;
+                                                                                const isCorrect = renderVal(q.correct) === k;
+                                                                                let bgColor = "rgba(255, 255, 255, 0.02)";
+                                                                                let borderColor = "rgba(255, 255, 255, 0.08)";
+                                                                                let textColor = "#9aa3c7";
+
+                                                                                if (isCorrect) {
+                                                                                    bgColor = "rgba(34, 197, 94, 0.15)";
+                                                                                    borderColor = "rgba(34, 197, 94, 0.4)";
+                                                                                    textColor = "#22c55e";
+                                                                                } else if (isUserAnswer && !isCorrect) {
+                                                                                    bgColor = "rgba(239, 68, 68, 0.15)";
+                                                                                    borderColor = "rgba(239, 68, 68, 0.4)";
+                                                                                    textColor = "#ef4444";
+                                                                                }
+
+                                                                                return (
+                                                                                    <div
+                                                                                        key={key}
+                                                                                        style={{
+                                                                                            padding: "clamp(8px, 2vw, 10px) clamp(10px, 2vw, 12px)",
+                                                                                            background: bgColor,
+                                                                                            border: `1px solid ${borderColor}`,
+                                                                                            borderRadius: "8px",
+                                                                                            fontSize: "clamp(11px, 2vw, 12px)",
+                                                                                            color: textColor,
+                                                                                            fontWeight: isUserAnswer || isCorrect ? "600" : "400"
+                                                                                        }}
+                                                                                    >
+                                                                                        <div style={{ fontWeight: "700", marginBottom: "2px" }}>
+                                                                                            {key.toUpperCase()}
+                                                                                        </div>
+                                                                                        {value}
+                                                                                        {isUserAnswer && <div style={{ marginTop: "4px", fontSize: "clamp(9px, 2vw, 10px)" }}>👤 Your Answer</div>}
+                                                                                        {isCorrect && <div style={{ marginTop: "4px", fontSize: "clamp(9px, 2vw, 10px)" }}>✓ Correct</div>}
+                                                                                    </div>
+                                                                                );
+                                                                            })
+                                                                        ) : null}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Handle "Other" option */}
+                                                                {q.includeOther && (
+                                                                    (() => {
+                                                                        let otherAnswer = null;
+                                                                        let isOtherSelected = false;
+
+                                                                        if (Array.isArray(userAnswer)) {
+                                                                            const otherItem = userAnswer.find(ans => typeof ans === 'string' && ans.startsWith('other'));
+                                                                            if (otherItem) {
+                                                                                otherAnswer = otherItem;
+                                                                                isOtherSelected = true;
+                                                                            }
+                                                                        } else if (typeof userAnswer === 'string' && userAnswer.startsWith('other')) {
+                                                                            otherAnswer = userAnswer;
+                                                                            isOtherSelected = true;
                                                                         }
 
-                                                                        return (
-                                                                            <div
-                                                                                key={key}
-                                                                                style={{
-                                                                                    padding: "clamp(8px, 2vw, 10px) clamp(10px, 2vw, 12px)",
-                                                                                    background: bgColor,
-                                                                                    border: `1px solid ${borderColor}`,
+                                                                        if (isOtherSelected) {
+                                                                            return (
+                                                                                <div style={{
+                                                                                    marginTop: "12px",
+                                                                                    padding: "clamp(10px, 2vw, 12px)",
+                                                                                    background: "rgba(168, 85, 247, 0.15)",
+                                                                                    border: "1px solid rgba(168, 85, 247, 0.4)",
                                                                                     borderRadius: "8px",
-                                                                                    fontSize: "clamp(11px, 2vw, 12px)",
-                                                                                    color: textColor,
-                                                                                    fontWeight: isUserAnswer || isCorrect ? "600" : "400"
-                                                                                }}
-                                                                            >
-                                                                                <div style={{ fontWeight: "700", marginBottom: "2px" }}>
-                                                                                    {key.toUpperCase()}
+                                                                                    borderLeft: "4px solid #a855f7"
+                                                                                }}>
+                                                                                    <div style={{ fontSize: "clamp(11px, 2vw, 12px)", fontWeight: "600", color: "#d8b4fe", marginBottom: "6px" }}>
+                                                                                        ○ Other Response:
+                                                                                    </div>
+                                                                                    <div style={{ fontSize: "clamp(11px, 2vw, 13px)", color: "#fff", lineHeight: "1.5" }}>
+                                                                                        {otherAnswer.includes(':') ? otherAnswer.split(':')[1].trim() : 'Other (no text provided)'}
+                                                                                    </div>
+                                                                                    <div style={{ marginTop: "4px", fontSize: "clamp(9px, 2vw, 10px)", color: "#a855f7" }}>
+                                                                                        👤 Answered
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div style={{ fontSize: "clamp(10px, 2vw, 11px)" }}>
-                                                                                    {value}
-                                                                                </div>
-                                                                                {isUserAnswer && <div style={{ marginTop: "4px", fontSize: "clamp(9px, 2vw, 10px)" }}>👤 Your Answer</div>}
-                                                                                {isCorrect && <div style={{ marginTop: "4px", fontSize: "clamp(9px, 2vw, 10px)" }}>✓ Correct</div>}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
+                                                                            );
+                                                                        }
+                                                                        return null;
+                                                                    })()
+                                                                )}
                                                             </div>
                                                         </div>
                                                     );

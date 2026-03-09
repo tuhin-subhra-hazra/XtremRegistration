@@ -3,24 +3,66 @@ import { ref, set, remove, onValue } from "firebase/database";
 import { db } from "../../firebase";
 
 export default function ManageQuestions() {
+    const [questionType, setQuestionType] = useState("single"); // single, multiple, text, consent
     const [question, setQuestion] = useState("");
-    const [options, setOptions] = useState({
-        a: "",
-        b: "",
-        c: "",
-        d: ""
-    });
+    const [options, setOptions] = useState([{ id: 1, text: "" }, { id: 2, text: "" }]);
+    const [includeOther, setIncludeOther] = useState(false);
+    const [consentText, setConsentText] = useState("");
     const [correct, setCorrect] = useState("");
     const [active, setActive] = useState(true);
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({
+        type: "single",
         question: "",
-        options: { a: "", b: "", c: "", d: "" },
+        options: [{ id: 1, text: "" }, { id: 2, text: "" }],
+        includeOther: false,
+        consentText: "",
         correct: "",
         active: true
     });
+    const [showForm, setShowForm] = useState(false); // toggle visibility of new question form
+
+
+    const addOption = () => {
+        const newId = Math.max(...options.map(o => o.id), 0) + 1;
+        setOptions([...options, { id: newId, text: "" }]);
+    };
+
+    const removeOption = (id) => {
+        if (options.length > 1) {
+            setOptions(options.filter(o => o.id !== id));
+        }
+    };
+
+    const updateOption = (id, text) => {
+        setOptions(options.map(o => o.id === id ? { ...o, text } : o));
+    };
+
+    const addEditOption = () => {
+        const newId = Math.max(...editData.options.map(o => o.id), 0) + 1;
+        setEditData({
+            ...editData,
+            options: [...editData.options, { id: newId, text: "" }]
+        });
+    };
+
+    const removeEditOption = (id) => {
+        if (editData.options.length > 1) {
+            setEditData({
+                ...editData,
+                options: editData.options.filter(o => o.id !== id)
+            });
+        }
+    };
+
+    const updateEditOption = (id, text) => {
+        setEditData({
+            ...editData,
+            options: editData.options.map(o => o.id === id ? { ...o, text } : o)
+        });
+    };
 
     // Fetch questions from database
     useEffect(() => {
@@ -44,28 +86,55 @@ export default function ManageQuestions() {
     }, []);
 
     const saveQuestion = async () => {
-        if (!question || !options.a || !options.b || !options.c || !options.d || !correct) {
-            alert("Please fill all fields");
-            return;
+        if (questionType === "consent") {
+            if (!consentText.trim()) {
+                alert("Please enter consent text");
+                return;
+            }
+        } else if (questionType === "text") {
+            if (!question.trim()) {
+                alert("Please enter the question");
+                return;
+            }
+        } else {
+            if (!question.trim()) {
+                alert("Please enter the question");
+                return;
+            }
+            if (options.some(o => !o.text.trim())) {
+                alert("Please fill all options");
+                return;
+            }
         }
 
         setLoading(true);
         try {
             const qid = "q" + Date.now();
-            const order = questions.length; // Set order based on current number of questions
-            await set(ref(db, `quiz/quiz1/questions/${qid}`), {
-                question,
-                options,
-                correct,
+            const order = questions.length;
+            const questionData = {
+                type: questionType,
                 order,
                 active
-            });
+            };
+
+            if (questionType === "consent") {
+                questionData.consentText = consentText;
+            } else if (questionType === "text") {
+                questionData.question = question;
+            } else {
+                questionData.question = question;
+                questionData.options = options;
+                questionData.includeOther = includeOther;
+            }
+
+            await set(ref(db, `quiz/quiz1/questions/${qid}`), questionData);
             alert("Question Saved ✅");
 
             // Reset form
             setQuestion("");
-            setOptions({ a: "", b: "", c: "", d: "" });
-            setCorrect("");
+            setOptions([{ id: 1, text: "" }, { id: 2, text: "" }]);
+            setIncludeOther(false);
+            setConsentText("");
             setActive(true);
         } catch (error) {
             console.error("Error saving question:", error);
@@ -90,27 +159,57 @@ export default function ManageQuestions() {
     const startEdit = (q) => {
         setEditingId(q.id);
         setEditData({
-            question: q.question,
-            options: { ...q.options },
-            correct: q.correct,
+            type: q.type || "single",
+            question: q.question || "",
+            options: q.options && Array.isArray(q.options) ? [...q.options] : q.options ? Object.entries(q.options).map(([k, v], idx) => ({ id: idx + 1, text: v })) : [{ id: 1, text: "" }, { id: 2, text: "" }],
+            includeOther: q.includeOther || false,
+            consentText: q.consentText || "",
+            correct: q.correct || "",
             active: q.active !== false
         });
     };
 
     const saveEditedQuestion = async () => {
-        if (!editData.question || !editData.options.a || !editData.options.b || !editData.options.c || !editData.options.d || !editData.correct) {
-            alert("Please fill all fields");
-            return;
+        if (editData.type === "consent") {
+            if (!editData.consentText.trim()) {
+                alert("Please enter consent text");
+                return;
+            }
+        } else if (editData.type === "text") {
+            if (!editData.question.trim()) {
+                alert("Please enter the question");
+                return;
+            }
+        } else {
+            if (!editData.question.trim()) {
+                alert("Please enter the question");
+                return;
+            }
+            if (editData.options.some(o => !o.text.trim())) {
+                alert("Please fill all options");
+                return;
+            }
         }
 
         try {
-            await set(ref(db, `quiz/quiz1/questions/${editingId}`), {
-                question: editData.question,
-                options: editData.options,
-                correct: editData.correct,
+            const questionByIdData = questions.find(q => q.id === editingId);
+            const updateData = {
+                type: editData.type,
                 active: editData.active,
-                order: questions.find(q => q.id === editingId)?.order || 0
-            });
+                order: questionByIdData?.order || 0
+            };
+
+            if (editData.type === "consent") {
+                updateData.consentText = editData.consentText;
+            } else if (editData.type === "text") {
+                updateData.question = editData.question;
+            } else {
+                updateData.question = editData.question;
+                updateData.options = editData.options;
+                updateData.includeOther = editData.includeOther;
+            }
+
+            await set(ref(db, `quiz/quiz1/questions/${editingId}`), updateData);
             alert("Question Updated ✅");
             setEditingId(null);
         } catch (error) {
@@ -122,8 +221,11 @@ export default function ManageQuestions() {
     const cancelEdit = () => {
         setEditingId(null);
         setEditData({
+            type: "single",
             question: "",
-            options: { a: "", b: "", c: "", d: "" },
+            options: [{ id: 1, text: "" }, { id: 2, text: "" }],
+            includeOther: false,
+            consentText: "",
             correct: "",
             active: true
         });
@@ -197,35 +299,53 @@ export default function ManageQuestions() {
 
                 <div style={{
                     display: "grid",
-                    gridTemplateColumns: "clamp(300px, 40%, 500px) 1fr",
-                    gap: "10px",
-                    margin: "0",
-                    alignItems: "start"
+                    gridTemplateColumns: "1fr",
+                    gap: "20px",
+                    margin: "0"
                 }} className="questions-grid">
-                    {/* Left Column - Form */}
-                    <div>
-                        <div style={{
-                            background: "rgba(255, 255, 255, 0.06)",
-                            backdropFilter: "blur(20px)",
-                            padding: "clamp(20px, 5vw, 30px)",
-                            borderRadius: "22px",
-                            border: "1px solid rgba(255, 255, 255, 0.12)",
-                            boxShadow: "0 30px 60px rgba(0, 0, 0, 0.6)",
-                            position: "sticky",
-                            top: "20px"
-                        }}>
-                            <h2 style={{
-                                fontSize: "clamp(18px, 4vw, 22px)",
-                                fontWeight: "700",
-                                background: "linear-gradient(to right, #fff, #94a3b8)",
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                margin: "0 0 20px 0"
-                            }}>
-                                ➕ New Question
-                            </h2>
+                    {/* Toggle button */}
+                    <button
+                        onClick={() => setShowForm(!showForm)}
+                        style={{
+                            padding: "12px 20px",
+                            background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "10px",
+                            fontWeight: "700",
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            transition: "all 0.3s",
+                            width: "fit-content",
+                            margin: "0 auto"
+                        }}
+                    >
+                        {showForm ? "Hide New Question" : "Add New Question"}
+                    </button>
 
-                            <div style={{ marginBottom: "15px" }}>
+                    {showForm && (
+                        <div>
+                            <div style={{
+                                background: "rgba(255, 255, 255, 0.06)",
+                                backdropFilter: "blur(20px)",
+                                padding: "clamp(20px, 5vw, 30px)",
+                                borderRadius: "22px",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                boxShadow: "0 30px 60px rgba(0, 0, 0, 0.6)"
+                            }}>
+                                <h2 style={{
+                                    fontSize: "clamp(18px, 4vw, 22px)",
+                                    fontWeight: "700",
+                                    background: "linear-gradient(to right, #fff, #94a3b8)",
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    margin: "0 0 20px 0"
+                                }}>
+                                    ➕ New Question
+                                </h2>
+
+                            {/* Question Type Selector */}
+                            <div style={{ marginBottom: "20px" }}>
                                 <label style={{
                                     display: "block",
                                     fontSize: "12px",
@@ -233,54 +353,17 @@ export default function ManageQuestions() {
                                     color: "#9aa3c7",
                                     marginBottom: "8px"
                                 }}>
-                                    Question
+                                    Question Type
                                 </label>
-                                <textarea
-                                    placeholder="Enter your question here..."
-                                    value={question}
-                                    onChange={e => setQuestion(e.target.value)}
-                                    style={{
-                                        width: "100%",
-                                        padding: "12px 14px",
-                                        border: "1px solid rgba(255, 255, 255, 0.12)",
-                                        borderRadius: "12px",
-                                        background: "rgba(0, 0, 0, 0.35)",
-                                        color: "#fff",
-                                        fontSize: "14px",
-                                        boxSizing: "border-box",
-                                        resize: "vertical",
-                                        minHeight: "70px",
-                                        outline: "none",
-                                        transition: "all 0.3s",
-                                        fontFamily: "inherit"
+                                <select
+                                    value={questionType}
+                                    onChange={e => {
+                                        setQuestionType(e.target.value);
+                                        setQuestion("");
+                                        setOptions([{ id: 1, text: "" }, { id: 2, text: "" }]);
+                                        setIncludeOther(false);
+                                        setConsentText("");
                                     }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = "#6366f1";
-                                        e.target.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = "rgba(255, 255, 255, 0.12)";
-                                        e.target.style.boxShadow = "none";
-                                    }}
-                                />
-                            </div>
-
-                            <label style={{
-                                display: "block",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                                color: "#9aa3c7",
-                                marginBottom: "10px"
-                            }}>
-                                Options
-                            </label>
-
-                            {["a", "b", "c", "d"].map(key => (
-                                <input
-                                    key={key}
-                                    placeholder={`Option ${key.toUpperCase()}`}
-                                    value={options[key]}
-                                    onChange={e => setOptions({ ...options, [key]: e.target.value })}
                                     style={{
                                         width: "100%",
                                         padding: "10px 12px",
@@ -290,7 +373,7 @@ export default function ManageQuestions() {
                                         color: "#fff",
                                         fontSize: "13px",
                                         boxSizing: "border-box",
-                                        marginBottom: "8px",
+                                        cursor: "pointer",
                                         outline: "none",
                                         transition: "all 0.3s"
                                     }}
@@ -302,51 +385,227 @@ export default function ManageQuestions() {
                                         e.target.style.borderColor = "rgba(255, 255, 255, 0.12)";
                                         e.target.style.boxShadow = "none";
                                     }}
-                                />
-                            ))}
+                                >
+                                    <option value="single">Choose Option (Single)</option>
+                                    <option value="multiple">Choose Option (Multiple)</option>
+                                    <option value="text">Text Answer</option>
+                                    <option value="consent">Consent</option>
+                                </select>
+                            </div>
 
-                            <label style={{
-                                display: "block",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                                color: "#9aa3c7",
-                                marginBottom: "8px",
-                                marginTop: "12px"
-                            }}>
-                                Correct Answer
-                            </label>
-                            <select
-                                value={correct}
-                                onChange={e => setCorrect(e.target.value)}
-                                style={{
-                                    width: "100%",
-                                    padding: "10px 12px",
-                                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                                    borderRadius: "10px",
-                                    background: "rgba(0, 0, 0, 0.35)",
-                                    color: "#fff",
-                                    fontSize: "13px",
-                                    boxSizing: "border-box",
-                                    cursor: "pointer",
-                                    outline: "none",
-                                    transition: "all 0.3s",
-                                    marginBottom: "20px"
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = "#6366f1";
-                                    e.target.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = "rgba(255, 255, 255, 0.12)";
-                                    e.target.style.boxShadow = "none";
-                                }}
-                            >
-                                <option value="">Select Correct Answer</option>
-                                <option value="a">Option A</option>
-                                <option value="b">Option B</option>
-                                <option value="c">Option C</option>
-                                <option value="d">Option D</option>
-                            </select>
+                            {/* Question Text - Not for Consent */}
+                            {questionType !== "consent" && (
+                                <div style={{ marginBottom: "15px" }}>
+                                    <label style={{
+                                        display: "block",
+                                        fontSize: "12px",
+                                        fontWeight: "600",
+                                        color: "#9aa3c7",
+                                        marginBottom: "8px"
+                                    }}>
+                                        Question
+                                    </label>
+                                    <textarea
+                                        placeholder="Enter your question here..."
+                                        value={question}
+                                        onChange={e => setQuestion(e.target.value)}
+                                        style={{
+                                            width: "100%",
+                                            padding: "12px 14px",
+                                            border: "1px solid rgba(255, 255, 255, 0.12)",
+                                            borderRadius: "12px",
+                                            background: "rgba(0, 0, 0, 0.35)",
+                                            color: "#fff",
+                                            fontSize: "14px",
+                                            boxSizing: "border-box",
+                                            resize: "vertical",
+                                            minHeight: "70px",
+                                            outline: "none",
+                                            transition: "all 0.3s",
+                                            fontFamily: "inherit"
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.borderColor = "#6366f1";
+                                            e.target.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.borderColor = "rgba(255, 255, 255, 0.12)";
+                                            e.target.style.boxShadow = "none";
+                                        }}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Consent Text - Only for Consent */}
+                            {questionType === "consent" && (
+                                <div style={{ marginBottom: "20px" }}>
+                                    <label style={{
+                                        display: "block",
+                                        fontSize: "12px",
+                                        fontWeight: "600",
+                                        color: "#9aa3c7",
+                                        marginBottom: "8px"
+                                    }}>
+                                        Consent Text
+                                    </label>
+                                    <textarea
+                                        placeholder="Enter consent text here..."
+                                        value={consentText}
+                                        onChange={e => setConsentText(e.target.value)}
+                                        style={{
+                                            width: "100%",
+                                            padding: "12px 14px",
+                                            border: "1px solid rgba(255, 255, 255, 0.12)",
+                                            borderRadius: "12px",
+                                            background: "rgba(0, 0, 0, 0.35)",
+                                            color: "#fff",
+                                            fontSize: "14px",
+                                            boxSizing: "border-box",
+                                            resize: "vertical",
+                                            minHeight: "70px",
+                                            outline: "none",
+                                            transition: "all 0.3s",
+                                            fontFamily: "inherit"
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.borderColor = "#6366f1";
+                                            e.target.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.borderColor = "rgba(255, 255, 255, 0.12)";
+                                            e.target.style.boxShadow = "none";
+                                        }}
+                                    />
+                                    <p style={{ color: "#9aa3c7", fontSize: "12px", marginTop: "8px" }}>
+                                        Consent will have Yes/No buttons
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Options - Only for Single and Multiple */}
+                            {(questionType === "single" || questionType === "multiple") && (
+                                <div style={{ marginBottom: "20px" }}>
+                                    <div style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        marginBottom: "10px"
+                                    }}>
+                                        <label style={{
+                                            display: "block",
+                                            fontSize: "12px",
+                                            fontWeight: "600",
+                                            color: "#9aa3c7"
+                                        }}>
+                                            Options
+                                        </label>
+                                        <button
+                                            onClick={addOption}
+                                            style={{
+                                                padding: "4px 12px",
+                                                background: "rgba(99, 102, 241, 0.2)",
+                                                color: "#6366f1",
+                                                border: "1px solid #6366f1",
+                                                borderRadius: "6px",
+                                                fontWeight: "600",
+                                                fontSize: "11px",
+                                                cursor: "pointer",
+                                                transition: "all 0.3s"
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.background = "rgba(99, 102, 241, 0.4)";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.background = "rgba(99, 102, 241, 0.2)";
+                                            }}
+                                        >
+                                            + Add Option
+                                        </button>
+                                    </div>
+
+                                    {options.map((opt, idx) => (
+                                        <div key={opt.id} style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
+                                            <input
+                                                placeholder={`Option ${idx + 1}`}
+                                                value={opt.text}
+                                                onChange={e => updateOption(opt.id, e.target.value)}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: "10px 12px",
+                                                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                                                    borderRadius: "10px",
+                                                    background: "rgba(0, 0, 0, 0.35)",
+                                                    color: "#fff",
+                                                    fontSize: "13px",
+                                                    boxSizing: "border-box",
+                                                    outline: "none",
+                                                    transition: "all 0.3s"
+                                                }}
+                                                onFocus={(e) => {
+                                                    e.target.style.borderColor = "#6366f1";
+                                                    e.target.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
+                                                }}
+                                                onBlur={(e) => {
+                                                    e.target.style.borderColor = "rgba(255, 255, 255, 0.12)";
+                                                    e.target.style.boxShadow = "none";
+                                                }}
+                                            />
+                                            {options.length > 1 && (
+                                                <button
+                                                    onClick={() => removeOption(opt.id)}
+                                                    style={{
+                                                        padding: "8px 12px",
+                                                        background: "rgba(255, 59, 48, 0.15)",
+                                                        color: "#ff6b6b",
+                                                        border: "1px solid rgba(255, 59, 48, 0.3)",
+                                                        borderRadius: "8px",
+                                                        cursor: "pointer",
+                                                        fontSize: "13px",
+                                                        fontWeight: "600",
+                                                        transition: "all 0.3s"
+                                                    }}
+                                                    onMouseEnter={(e) => e.target.style.transform = "translateY(-2px)"}
+                                                    onMouseLeave={(e) => e.target.style.transform = "translateY(0)"}
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    <div style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
+                                        padding: "12px",
+                                        background: "rgba(99, 102, 241, 0.1)",
+                                        border: "1px solid rgba(99, 102, 241, 0.3)",
+                                        borderRadius: "10px",
+                                        marginTop: "12px"
+                                    }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={includeOther}
+                                            onChange={e => setIncludeOther(e.target.checked)}
+                                            style={{
+                                                width: "18px",
+                                                height: "18px",
+                                                cursor: "pointer",
+                                                accentColor: "#6366f1"
+                                            }}
+                                        />
+                                        <label style={{
+                                            fontSize: "13px",
+                                            fontWeight: "600",
+                                            color: "#9aa3c7",
+                                            cursor: "pointer",
+                                            margin: 0
+                                        }}>
+                                            Include "Other" with text field
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
 
                             <div style={{
                                 display: "flex",
@@ -404,6 +663,7 @@ export default function ManageQuestions() {
                             </button>
                         </div>
                     </div>
+                    )}
 
                     {/* Right Column - Questions List */}
                     <div>
@@ -414,10 +674,6 @@ export default function ManageQuestions() {
                             borderRadius: "22px",
                             border: "1px solid rgba(255, 255, 255, 0.12)",
                             boxShadow: "0 30px 60px rgba(0, 0, 0, 0.6)",
-                            position: "sticky",
-                            top: "20px",
-                            maxHeight: "calc(100vh - 10px)",
-                            overflowY: "auto",
                             display: "flex",
                             flexDirection: "column"
                         }}>
@@ -483,102 +739,183 @@ export default function ManageQuestions() {
                                                         fontSize: "11px",
                                                         fontWeight: "600",
                                                         color: "#9aa3c7",
-                                                        marginBottom: "6px"
+                                                        marginBottom: "8px"
                                                     }}>
-                                                        Question
+                                                        Type: {editData.type === "single" && "Single Choice"} {editData.type === "multiple" && "Multiple Choice"} {editData.type === "text" && "Text Answer"} {editData.type === "consent" && "Consent"}
                                                     </label>
-                                                    <textarea
-                                                        value={editData.question}
-                                                        onChange={e => setEditData({ ...editData, question: e.target.value })}
-                                                        style={{
-                                                            width: "100%",
-                                                            padding: "8px 12px",
-                                                            border: "1px solid #a855f7",
-                                                            borderRadius: "8px",
-                                                            background: "rgba(0, 0, 0, 0.35)",
-                                                            color: "#fff",
-                                                            fontSize: "12px",
-                                                            boxSizing: "border-box",
-                                                            marginBottom: "10px",
-                                                            resize: "vertical",
-                                                            minHeight: "50px",
-                                                            outline: "none",
-                                                            fontFamily: "inherit"
-                                                        }}
-                                                    />
 
-                                                    <label style={{
-                                                        display: "block",
-                                                        fontSize: "11px",
-                                                        fontWeight: "600",
-                                                        color: "#9aa3c7",
-                                                        marginBottom: "6px"
-                                                    }}>
-                                                        Options
-                                                    </label>
-                                                    {["a", "b", "c", "d"].map(key => (
-                                                        <input
-                                                            key={key}
-                                                            placeholder={`Option ${key.toUpperCase()}`}
-                                                            value={editData.options[key]}
-                                                            onChange={e => setEditData({
-                                                                ...editData,
-                                                                options: { ...editData.options, [key]: e.target.value }
-                                                            })}
-                                                            style={{
-                                                                width: "100%",
-                                                                marginBottom: "6px",
-                                                                padding: "8px 10px",
-                                                                border: "1px solid #a855f7",
+                                                    {editData.type !== "consent" && (
+                                                        <>
+                                                            <label style={{
+                                                                display: "block",
+                                                                fontSize: "11px",
+                                                                fontWeight: "600",
+                                                                color: "#9aa3c7",
+                                                                marginBottom: "6px"
+                                                            }}>
+                                                                Question
+                                                            </label>
+                                                            <textarea
+                                                                value={editData.question}
+                                                                onChange={e => setEditData({ ...editData, question: e.target.value })}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    padding: "8px 12px",
+                                                                    border: "1px solid #a855f7",
+                                                                    borderRadius: "8px",
+                                                                    background: "rgba(0, 0, 0, 0.35)",
+                                                                    color: "#fff",
+                                                                    fontSize: "12px",
+                                                                    boxSizing: "border-box",
+                                                                    marginBottom: "10px",
+                                                                    resize: "vertical",
+                                                                    minHeight: "50px",
+                                                                    outline: "none",
+                                                                    fontFamily: "inherit"
+                                                                }}
+                                                            />
+                                                        </>
+                                                    )}
+
+                                                    {editData.type === "consent" && (
+                                                        <>
+                                                            <label style={{
+                                                                display: "block",
+                                                                fontSize: "11px",
+                                                                fontWeight: "600",
+                                                                color: "#9aa3c7",
+                                                                marginBottom: "6px"
+                                                            }}>
+                                                                Consent Text
+                                                            </label>
+                                                            <textarea
+                                                                value={editData.consentText}
+                                                                onChange={e => setEditData({ ...editData, consentText: e.target.value })}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    padding: "8px 12px",
+                                                                    border: "1px solid #a855f7",
+                                                                    borderRadius: "8px",
+                                                                    background: "rgba(0, 0, 0, 0.35)",
+                                                                    color: "#fff",
+                                                                    fontSize: "12px",
+                                                                    boxSizing: "border-box",
+                                                                    marginBottom: "10px",
+                                                                    resize: "vertical",
+                                                                    minHeight: "50px",
+                                                                    outline: "none",
+                                                                    fontFamily: "inherit"
+                                                                }}
+                                                            />
+                                                        </>
+                                                    )}
+
+                                                    {(editData.type === "single" || editData.type === "multiple") && (
+                                                        <>
+                                                            <label style={{
+                                                                display: "block",
+                                                                fontSize: "11px",
+                                                                fontWeight: "600",
+                                                                color: "#9aa3c7",
+                                                                marginBottom: "6px"
+                                                            }}>
+                                                                Options
+                                                            </label>
+                                                            {editData.options.map((opt, idx) => (
+                                                                <div key={opt.id} style={{ display: "flex", gap: "6px", marginBottom: "6px", alignItems: "center" }}>
+                                                                    <input
+                                                                        placeholder={`Option ${idx + 1}`}
+                                                                        value={opt.text}
+                                                                        onChange={e => updateEditOption(opt.id, e.target.value)}
+                                                                        style={{
+                                                                            flex: 1,
+                                                                            padding: "6px 10px",
+                                                                            border: "1px solid #a855f7",
+                                                                            borderRadius: "6px",
+                                                                            background: "rgba(0, 0, 0, 0.35)",
+                                                                            color: "#fff",
+                                                                            fontSize: "11px",
+                                                                            boxSizing: "border-box",
+                                                                            outline: "none"
+                                                                        }}
+                                                                    />
+                                                                    {editData.options.length > 1 && (
+                                                                        <button
+                                                                            onClick={() => removeEditOption(opt.id)}
+                                                                            style={{
+                                                                                padding: "4px 8px",
+                                                                                background: "rgba(255, 59, 48, 0.15)",
+                                                                                color: "#ff6b6b",
+                                                                                border: "1px solid rgba(255, 59, 48, 0.3)",
+                                                                                borderRadius: "6px",
+                                                                                cursor: "pointer",
+                                                                                fontSize: "11px",
+                                                                                fontWeight: "600",
+                                                                                transition: "all 0.3s"
+                                                                            }}
+                                                                        >
+                                                                            ✕
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                            <button
+                                                                onClick={addEditOption}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    padding: "6px",
+                                                                    background: "rgba(99, 102, 241, 0.2)",
+                                                                    color: "#6366f1",
+                                                                    border: "1px solid #6366f1",
+                                                                    borderRadius: "6px",
+                                                                    fontWeight: "600",
+                                                                    fontSize: "10px",
+                                                                    cursor: "pointer",
+                                                                    marginBottom: "10px",
+                                                                    transition: "all 0.3s"
+                                                                }}
+                                                            >
+                                                                + Add Option
+                                                            </button>
+                                                            <div style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                gap: "8px",
+                                                                padding: "8px",
+                                                                background: "rgba(168, 85, 247, 0.1)",
+                                                                border: "1px solid rgba(168, 85, 247, 0.3)",
                                                                 borderRadius: "8px",
-                                                                background: "rgba(0, 0, 0, 0.35)",
-                                                                color: "#fff",
-                                                                fontSize: "12px",
-                                                                boxSizing: "border-box",
-                                                                outline: "none"
-                                                            }}
-                                                        />
-                                                    ))}
-
-                                                    <label style={{
-                                                        display: "block",
-                                                        fontSize: "11px",
-                                                        fontWeight: "600",
-                                                        color: "#9aa3c7",
-                                                        marginBottom: "6px",
-                                                        marginTop: "10px"
-                                                    }}>
-                                                        Correct Answer
-                                                    </label>
-                                                    <select
-                                                        value={editData.correct}
-                                                        onChange={e => setEditData({ ...editData, correct: e.target.value })}
-                                                        style={{
-                                                            width: "100%",
-                                                            padding: "8px 10px",
-                                                            border: "1px solid #a855f7",
-                                                            borderRadius: "8px",
-                                                            background: "rgba(0, 0, 0, 0.35)",
-                                                            color: "#fff",
-                                                            fontSize: "12px",
-                                                            boxSizing: "border-box",
-                                                            cursor: "pointer",
-                                                            marginBottom: "12px",
-                                                            outline: "none"
-                                                        }}
-                                                    >
-                                                        <option value="">Select Correct Answer</option>
-                                                        <option value="a">Option A</option>
-                                                        <option value="b">Option B</option>
-                                                        <option value="c">Option C</option>
-                                                        <option value="d">Option D</option>
-                                                    </select>
+                                                                marginBottom: "10px"
+                                                            }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={editData.includeOther}
+                                                                    onChange={e => setEditData({ ...editData, includeOther: e.target.checked })}
+                                                                    style={{
+                                                                        width: "14px",
+                                                                        height: "14px",
+                                                                        cursor: "pointer",
+                                                                        accentColor: "#a855f7"
+                                                                    }}
+                                                                />
+                                                                <label style={{
+                                                                    fontSize: "10px",
+                                                                    fontWeight: "600",
+                                                                    color: "#d8b4fe",
+                                                                    cursor: "pointer",
+                                                                    margin: 0
+                                                                }}>
+                                                                    Include "Other"
+                                                                </label>
+                                                            </div>
+                                                        </>
+                                                    )}
 
                                                     <div style={{
                                                         display: "flex",
                                                         alignItems: "center",
                                                         gap: "8px",
-                                                        padding: "10px",
+                                                        padding: "8px",
                                                         background: "rgba(168, 85, 247, 0.1)",
                                                         border: "1px solid rgba(168, 85, 247, 0.3)",
                                                         borderRadius: "8px",
@@ -661,7 +998,7 @@ export default function ManageQuestions() {
                                                             color: "#F6EB61",
                                                             fontWeight: "600"
                                                         }}>
-                                                            Q{index + 1}
+                                                            Q{index + 1} ({q.type === "single" ? "Single" : q.type === "multiple" ? "Multiple" : q.type === "text" ? "Text" : q.type === "consent" ? "Consent" : "Legacy"})
                                                         </div>
                                                         
                                                         {/* Active/Inactive Toggle Switch */}
@@ -714,36 +1051,141 @@ export default function ManageQuestions() {
                                                         </label>
                                                     </div>
 
-                                                    <div style={{
-                                                        fontWeight: "600",
-                                                        color: "#fff",
-                                                        fontSize: "clamp(12px, 2vw, 14px)",
-                                                        lineHeight: "1.5",
-                                                        marginBottom: "10px"
-                                                    }}>
-                                                        {q.question}
-                                                    </div>
-
-                                                    <div style={{ marginBottom: "12px" }}>
-                                                        {Object.entries(q.options).map(([key, value]) => (
-                                                            <div
-                                                                key={key}
-                                                                style={{
-                                                                    padding: "6px 10px",
-                                                                    background: q.correct === key ? "rgba(168, 85, 247, 0.15)" : "rgba(255, 255, 255, 0.02)",
-                                                                    border: q.correct === key ? "1px solid #a855f7" : "1px solid rgba(255, 255, 255, 0.08)",
-                                                                    borderRadius: "6px",
-                                                                    marginBottom: "4px",
-                                                                    fontSize: "12px",
-                                                                    color: q.correct === key ? "#d8b4fe" : "#9aa3c7",
-                                                                    fontWeight: q.correct === key ? "600" : "400"
-                                                                }}>
-                                                                <span style={{ fontWeight: "700" }}>{key.toUpperCase()}:</span> {value} {q.correct === key && "✓"}
+                                                    {q.type === "consent" ? (
+                                                        <div>
+                                                            <div style={{
+                                                                fontWeight: "600",
+                                                                color: "#fff",
+                                                                fontSize: "clamp(12px, 2vw, 14px)",
+                                                                lineHeight: "1.5",
+                                                                marginBottom: "10px",
+                                                                padding: "10px",
+                                                                background: "rgba(168, 85, 247, 0.1)",
+                                                                borderRadius: "6px"
+                                                            }}>
+                                                                {q.consentText}
                                                             </div>
-                                                        ))}
-                                                    </div>
+                                                            <div style={{
+                                                                display: "grid",
+                                                                gridTemplateColumns: "1fr 1fr",
+                                                                gap: "8px",
+                                                                marginBottom: "12px"
+                                                            }}>
+                                                                <button style={{
+                                                                    padding: "8px",
+                                                                    background: "rgba(34, 197, 94, 0.15)",
+                                                                    color: "#22c55e",
+                                                                    border: "1px solid #22c55e",
+                                                                    borderRadius: "6px",
+                                                                    fontWeight: "600",
+                                                                    fontSize: "12px",
+                                                                    cursor: "pointer"
+                                                                }}>
+                                                                    Yes
+                                                                </button>
+                                                                <button style={{
+                                                                    padding: "8px",
+                                                                    background: "rgba(239, 68, 68, 0.15)",
+                                                                    color: "#ef4444",
+                                                                    border: "1px solid #ef4444",
+                                                                    borderRadius: "6px",
+                                                                    fontWeight: "600",
+                                                                    fontSize: "12px",
+                                                                    cursor: "pointer"
+                                                                }}>
+                                                                    No
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : q.type === "text" ? (
+                                                        <div>
+                                                            <div style={{
+                                                                fontWeight: "600",
+                                                                color: "#fff",
+                                                                fontSize: "clamp(12px, 2vw, 14px)",
+                                                                lineHeight: "1.5",
+                                                                marginBottom: "10px"
+                                                            }}>
+                                                                {q.question}
+                                                            </div>
+                                                            <div style={{
+                                                                padding: "10px",
+                                                                background: "rgba(99, 102, 241, 0.15)",
+                                                                border: "1px solid rgba(99, 102, 241, 0.3)",
+                                                                borderRadius: "6px",
+                                                                fontSize: "12px",
+                                                                color: "#9aa3c7",
+                                                                fontStyle: "italic",
+                                                                marginBottom: "12px"
+                                                            }}>
+                                                                ✎ Text response (no fixed options)
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <div style={{
+                                                                fontWeight: "600",
+                                                                color: "#fff",
+                                                                fontSize: "clamp(12px, 2vw, 14px)",
+                                                                lineHeight: "1.5",
+                                                                marginBottom: "10px"
+                                                            }}>
+                                                                {q.question}
+                                                            </div>
 
-                                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                                                            <div style={{ marginBottom: "12px" }}>
+                                                                {q.options && Array.isArray(q.options) && q.options.map((opt, index) => (
+                                                                    <div
+                                                                        key={opt.id}
+                                                                        style={{
+                                                                            padding: "6px 10px",
+                                                                            background: "rgba(255, 255, 255, 0.02)",
+                                                                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                                            borderRadius: "6px",
+                                                                            marginBottom: "4px",
+                                                                            fontSize: "12px",
+                                                                            color: "#9aa3c7",
+                                                                            fontWeight: "400"
+                                                                        }}>
+                                                                        {index + 1}. {opt.text}
+                                                                    </div>
+                                                                ))}
+                                                                {q.options && !Array.isArray(q.options) && Object.entries(q.options).map(([key, value]) => (
+                                                                    <div
+                                                                        key={key}
+                                                                        style={{
+                                                                            padding: "6px 10px",
+                                                                            background: "rgba(255, 255, 255, 0.02)",
+                                                                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                                            borderRadius: "6px",
+                                                                            marginBottom: "4px",
+                                                                            fontSize: "12px",
+                                                                            color: "#9aa3c7",
+                                                                            fontWeight: "400"
+                                                                        }}>
+                                                                        {index + 1}. {value}
+                                                                    </div>
+                                                                ))}
+                                                                {q.includeOther && (
+                                                                    <div
+                                                                        style={{
+                                                                            padding: "6px 10px",
+                                                                            background: "rgba(255, 255, 255, 0.02)",
+                                                                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                                            borderRadius: "6px",
+                                                                            marginBottom: "4px",
+                                                                            fontSize: "12px",
+                                                                            color: "#9aa3c7",
+                                                                            fontWeight: "400"
+                                                                        }}>
+                                                                        {q.options.length + 1}. Other: _____________
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "6px" }}>
                                                         <button
                                                             onClick={() => startEdit(q)}
                                                             style={{
