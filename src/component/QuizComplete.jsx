@@ -29,10 +29,12 @@ export default function QuizComplete() {
         maxWidth: "400px",
         width: "90%"
       }}>
-        <h2 style={{ fontSize: "2rem", marginBottom: "10px" }}>🎉</h2>
-        <h2 style={{ fontSize: "2rem", marginBottom: "10px" }}>Quiz Completed!</h2>
-        <p style={{ color: "#c2c2c2ff", fontSize: "1.1rem" }}>Thank you for participating.</p>
-        {/* You could add a 'Restart' button here */}
+        <h2 style={{ fontSize: "2rem", marginBottom: "10px" }}>✅</h2>
+        <h2 style={{ fontSize: "2rem", marginBottom: "10px" }}>Form Submitted!</h2>
+        <p style={{ color: "#c2c2c2ff", fontSize: "1.1rem" }}>
+          Thanks for sharing your thoughts. Your responses have been recorded.
+        </p>
+        {/* You could add a 'Submit another response' button here */}
       </div>
     </div>
     </div>

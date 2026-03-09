@@ -21,13 +21,13 @@ export default function LeadForm() {
 
         try {
             // 🔍 Check if mobile already exists
-            const snapshot = await get(userRef);
+            // const snapshot = await get(userRef);
 
-            if (snapshot.exists()) {
-                alert("This mobile number is already registered ❌");
-                setLoading(false);
-                return;
-            }
+            // if (snapshot.exists()) {
+            //     alert("This mobile number is already registered ❌");
+            //     setLoading(false);
+            //     return;
+            // }
 
             // ✅ Save user
             await set(userRef, {

@@ -18,6 +18,8 @@ export default function Quiz() {
     const [loading, setLoading] = useState(true);
     const [quizStarted, setQuizStarted] = useState(false);
     const [selectedAnswers, setSelectedAnswers] = useState({});
+    const [introTitle, setIntroTitle] = useState("");
+    const [introDescription, setIntroDescription] = useState("");
 
     useEffect(() => {
         if (!userId) {
@@ -74,6 +76,18 @@ export default function Quiz() {
             });
 
             setQuestions(sanitized);
+
+            // Load intro/meta text (optional)
+            try {
+                const metaSnapshot = await get(ref(db, `quiz/${quizId}/meta`));
+                if (metaSnapshot.exists()) {
+                    const meta = metaSnapshot.val();
+                    if (meta.introTitle) setIntroTitle(meta.introTitle);
+                    if (meta.introDescription) setIntroDescription(meta.introDescription);
+                }
+            } catch (err) {
+                console.warn("Failed to load quiz meta", err);
+            }
         }
         setLoading(false);
     };
@@ -182,21 +196,21 @@ export default function Quiz() {
                     boxShadow: "0 30px 60px rgba(0, 0, 0, 0.6)",
                     padding: "clamp(40px, 8vw, 60px) clamp(30px, 6vw, 50px)",
                     color: "#fff",
-                    textAlign: "center",
-                    maxWidth: "600px",
+                    textAlign: "left",
+                    maxWidth: "820px",
                     display: "flex",
                     flexDirection: "column",
                     gap: "30px",
                     alignItems: "center"
                 }}>
                     {/* Icon/Emoji */}
-                    <div style={{ fontSize: "80px", animation: "pulse 2s infinite" }}>
-                        🚀
-                    </div>
+                    {/* <div style={{ fontSize: "80px", animation: "pulse 2s infinite" }}>
+                        📝
+                    </div> */}
 
                     {/* Title */}
                     <h1 style={{
-                        fontSize: "clamp(28px, 6vw, 48px)",
+                        fontSize: "clamp(24px, 5vw, 38px)",
                         fontWeight: "700",
                         background: "linear-gradient(to right, #6366f1, #a855f7)",
                         WebkitBackgroundClip: "text",
@@ -204,7 +218,7 @@ export default function Quiz() {
                         margin: "0",
                         lineHeight: "1.2"
                     }}>
-                        Let's Start the Quiz!
+                        {introTitle || "Share Your Feedback"}
                     </h1>
 
                     {/* Description */}
@@ -213,10 +227,11 @@ export default function Quiz() {
                         color: "#9aa3c7",
                         margin: "0",
                         lineHeight: "1.6",
-                        maxWidth: "500px"
                     }}>
-                        Get ready to test your knowledge! You'll be asked <span style={{ fontWeight: "600", color: "#d8b4fe" }}>{questions.length} questions</span>. 
-                        Each question is important, so read carefully and select the best answer.
+                        {introDescription
+                            ? introDescription.replace("{count}", String(questions.length))
+                            : <>Your opinions help us improve. Please take a moment to answer <span style={{ fontWeight: "600", color: "#d8b4fe" }}>{questions.length} quick questions</span> about your experience.</>
+                        }
                     </p>
 
                     {/* Stats */}
@@ -225,13 +240,15 @@ export default function Quiz() {
                         gridTemplateColumns: "1fr 1fr",
                         gap: "20px",
                         width: "100%",
-                        maxWidth: "400px"
+                        maxWidth: "1000px"
                     }}>
                         <div style={{
                             background: "rgba(99, 102, 241, 0.15)",
                             border: "1px solid rgba(99, 102, 241, 0.3)",
                             borderRadius: "12px",
                             padding: "20px",
+                            alignItems: "center",
+                            textAlign: "center",
                             backdropFilter: "blur(10px)"
                         }}>
                             <div style={{ fontSize: "28px", fontWeight: "700", color: "#6366f1", marginBottom: "5px" }}>
@@ -246,6 +263,8 @@ export default function Quiz() {
                             border: "1px solid rgba(168, 85, 247, 0.3)",
                             borderRadius: "12px",
                             padding: "20px",
+                            alignItems: "center",
+                            textAlign: "center",
                             backdropFilter: "blur(10px)"
                         }}>
                             <div style={{ fontSize: "28px", fontWeight: "700", color: "#a855f7", marginBottom: "5px" }}>
@@ -284,7 +303,7 @@ export default function Quiz() {
                             e.target.style.boxShadow = "0 10px 30px rgba(99, 102, 241, 0.3)";
                         }}
                     >
-                        Start Quiz →
+                        Fill The Form→
                     </button>
 
                     {/* Footer Note */}
@@ -654,7 +673,7 @@ export default function Quiz() {
                                 }
                             }}
                         >
-                            Submit Quiz ✓
+                            Submit Form ✓
                         </button>
                     ) : (
                         <button

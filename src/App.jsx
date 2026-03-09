@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LeadForm from "./pages/LeadForm";
 import AdminLogin from "./pages/AdminLogin";
-import Dashboard from "./pages/admin/Dashboard";
 import ProtectedRoute from "./component/ProtectedRoute";
 import "./App.css";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Quiz from "./component/Quiz";
 import QuizComplete from "./component/QuizComplete";
+import NotFound from "./NotFound";
 
 
 function App() {
@@ -22,6 +22,7 @@ function App() {
             <AdminLayout />
           </ProtectedRoute>
         } />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

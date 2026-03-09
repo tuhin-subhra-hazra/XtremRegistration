@@ -24,6 +24,11 @@ export default function ManageQuestions() {
     });
     const [showForm, setShowForm] = useState(false); // toggle visibility of new question form
 
+    // Intro text shown on the user-facing feedback form
+    const [introTitle, setIntroTitle] = useState("Share Your Feedback");
+    const [introDescription, setIntroDescription] = useState("Your opinions help us improve. Please take a moment to answer {count} quick questions about your experience.");
+    const [savingMeta, setSavingMeta] = useState(false);
+
 
     const addOption = () => {
         const newId = Math.max(...options.map(o => o.id), 0) + 1;
@@ -64,7 +69,7 @@ export default function ManageQuestions() {
         });
     };
 
-    // Fetch questions from database
+    // Fetch questions + meta from database
     useEffect(() => {
         const questionsRef = ref(db, "quiz/quiz1/questions");
         onValue(questionsRef, (snapshot) => {
@@ -81,6 +86,16 @@ export default function ManageQuestions() {
                 setQuestions(sortedQuestions);
             } else {
                 setQuestions([]);
+            }
+        });
+
+        // Meta (intro text) for the quiz start screen
+        const metaRef = ref(db, "quiz/quiz1/meta");
+        onValue(metaRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.introTitle) setIntroTitle(data.introTitle);
+                if (data.introDescription) setIntroDescription(data.introDescription);
             }
         });
     }, []);
@@ -141,6 +156,22 @@ export default function ManageQuestions() {
             alert("Error saving question");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const saveMeta = async () => {
+        setSavingMeta(true);
+        try {
+            await set(ref(db, `quiz/quiz1/meta`), {
+                introTitle,
+                introDescription
+            });
+            alert("Intro text updated ✅");
+        } catch (error) {
+            console.error("Error saving intro meta:", error);
+            alert("Error saving intro text");
+        } finally {
+            setSavingMeta(false);
         }
     };
 
@@ -295,6 +326,99 @@ export default function ManageQuestions() {
                     <p style={{ color: "#9aa3c7", fontSize: "clamp(13px, 2vw, 16px)", margin: 0 }}>
                         Create, edit, delete, and reorder your quiz questions
                     </p>
+
+                    <div style={{
+                        marginTop: "20px",
+                        padding: "20px",
+                        borderRadius: "18px",
+                        textAlign: "left",
+                        background: "rgba(255, 255, 255, 0.05)",
+                        border: "1px solid rgba(255, 255, 255, 0.12)"
+                    }}>
+                        <h2 style={{
+                            fontSize: "clamp(18px, 4vw, 22px)",
+                            fontWeight: "700",
+                            margin: "0 0 12px 0",
+                            color: "#fff"
+                        }}>
+                            Feedback Intro Text
+                        </h2>
+
+                        <label style={{
+                            display: "block",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            color: "#9aa3c7",
+                            marginLeft: "5px",
+                            marginBottom: "6px"
+                        }}>
+                            Title
+                        </label>
+                        <input
+                            value={introTitle}
+                            onChange={e => setIntroTitle(e.target.value)}
+                            placeholder="Share Your Feedback"
+                            style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: "12px",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                background: "rgba(0, 0, 0, 0.35)",
+                                color: "#fff",
+                                marginBottom: "14px",
+                                outline: "none",
+                                fontSize: "14px"
+                            }}
+                        />
+
+                        <label style={{
+                            display: "block",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            color: "#9aa3c7",
+                            marginLeft: "5px",
+                            marginBottom: "6px"
+                        }}>
+                            Description (use {"{count}"} to insert number of questions)
+                        </label>
+                        <textarea
+                            value={introDescription}
+                            onChange={e => setIntroDescription(e.target.value)}
+                            placeholder="Your opinions help us improve..."
+                            rows={3}
+                            style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: "12px",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                background: "rgba(0, 0, 0, 0.35)",
+                                color: "#fff",
+                                marginBottom: "14px",
+                                outline: "none",
+                                fontSize: "14px",
+                                resize: "vertical"
+                            }}
+                        />
+
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                            <button
+                                onClick={saveMeta}
+                                disabled={savingMeta}
+                                style={{
+                                    padding: "10px 14px",
+                                    background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: "10px",
+                                    cursor: savingMeta ? "not-allowed" : "pointer",
+                                    fontWeight: "700",
+                                    transition: "all 0.3s"
+                                }}
+                            >
+                                {savingMeta ? "Saving..." : "Save Intro Text"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div style={{
